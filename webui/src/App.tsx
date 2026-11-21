@@ -1,10 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { Trash2 } from 'lucide-react';
 import { HomePage } from './pages/HomePage';
-import { ChatPage } from './pages/ChatPage';
-import { SettingsModal, ProviderState } from './components/SettingsModal';
-import { WorkspaceModal } from './components/WorkspaceModal';
-import { UploadedAttachment } from './components/PromptBox';
+import type { ProviderState } from './components/SettingsModal';
+import type { UploadedAttachment } from './components/PromptBox';
+
+const ChatPage = lazy(() =>
+  import('./pages/ChatPage').then((m) => ({ default: m.ChatPage }))
+);
+const SettingsModal = lazy(() =>
+  import('./components/SettingsModal').then((m) => ({ default: m.SettingsModal }))
+);
+const WorkspaceModal = lazy(() =>
+  import('./components/WorkspaceModal').then((m) => ({ default: m.WorkspaceModal }))
+);
 
 interface SessionSummary {
   id: string;
@@ -29,8 +37,13 @@ function parseSessionIdFromLocation(loc: Location): string | null {
   return null;
 }
 
-export const App: React.FC = () => {
+interface AppProps {
+  onReady?: () => void;
+}
+
+export const App: React.FC<AppProps> = ({ onReady }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [showSidebarSearch, setShowSidebarSearch] = useState(false);
 
@@ -48,7 +61,7 @@ export const App: React.FC = () => {
   const [reasoningEffort, setReasoningEffort] = useState('default');
   const [defaultWorkspace, setDefaultWorkspace] = useState('');
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       const res = await fetch('/api/settings');
       const data = await res.json();
@@ -60,9 +73,9 @@ export const App: React.FC = () => {
     } catch {
       // ignore
     }
-  };
+  }, []);
 
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     try {
       const res = await fetch('/api/sessions');
       const data = await res.json();
@@ -72,14 +85,29 @@ export const App: React.FC = () => {
     } catch {
       // ignore
     }
-  };
+  }, []);
+
+  // Let the boot shell fade out as soon as the app has mounted.
+  useEffect(() => {
+    onReady?.();
+  }, [onReady]);
 
   useEffect(() => {
     loadSettings();
     loadSessions();
-    const interval = setInterval(loadSessions, 4000);
-    return () => clearInterval(interval);
-  }, []);
+    // Poll sessions, but skip ticks while the tab is hidden to save bandwidth/CPU.
+    const interval = setInterval(() => {
+      if (!document.hidden) loadSessions();
+    }, 4000);
+    const onVisible = () => {
+      if (!document.hidden) loadSessions();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [loadSessions, loadSettings]);
 
   useEffect(() => {
     const onPopState = () => {
@@ -89,65 +117,90 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  const navigateToHome = () => {
+  // Close the mobile drawer automatically when the viewport grows back to desktop.
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 769px)');
+    const onChange = () => {
+      if (mq.matches) setMobileNavOpen(false);
+    };
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  const navigateToHome = useCallback(() => {
     window.history.pushState({}, '', '/');
     setActiveSessionId(null);
-  };
+    setMobileNavOpen(false);
+  }, []);
 
-  const navigateToSession = (sessionId: string) => {
+  const navigateToSession = useCallback((sessionId: string) => {
     const targetUrl = `/chat/session=${sessionId}`;
     window.history.pushState({}, '', targetUrl);
     setActiveSessionId(sessionId);
-  };
+    setMobileNavOpen(false);
+  }, []);
 
-  const handleStartNewSessionWithPrompt = async (
-    prompt: string,
-    attachments: UploadedAttachment[]
-  ) => {
-    // 1. Request a 30-digit alphanumeric session ID
-    const idRes = await fetch('/api/sessions/new-id', { method: 'POST' });
-    const { sessionId } = await idRes.json();
+  const handleStartNewSessionWithPrompt = useCallback(
+    async (prompt: string, attachments: UploadedAttachment[]) => {
+      // 1. Request a 30-digit alphanumeric session ID
+      const idRes = await fetch('/api/sessions/new-id', { method: 'POST' });
+      const { sessionId } = await idRes.json();
 
-    // 2. Submit user prompt to start background ReAct loop
-    await fetch(`/api/sessions/${sessionId}/prompt`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prompt,
-        workspace: defaultWorkspace,
-        providerId: activeProvider,
-        modelId: activeModel,
-        attachments,
-      }),
-    });
-
-    await loadSessions();
-    // 3. Redirect to /chat/session=<30_digits_id>
-    navigateToSession(sessionId);
-  };
-
-  const handleDeleteSession = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
-    await loadSessions();
-    if (activeSessionId === id) {
-      navigateToHome();
-    }
-  };
-
-  const handleSelectWorkspace = async (
-    newWorkspace: string,
-    setAsDefault: boolean
-  ) => {
-    setDefaultWorkspace(newWorkspace);
-    if (setAsDefault) {
-      await fetch('/api/settings', {
+      // 2. Submit user prompt to start background ReAct loop
+      await fetch(`/api/sessions/${sessionId}/prompt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ defaultWorkspace: newWorkspace }),
+        body: JSON.stringify({
+          prompt,
+          workspace: defaultWorkspace,
+          providerId: activeProvider,
+          modelId: activeModel,
+          attachments,
+        }),
       });
-    }
-  };
+
+      await loadSessions();
+      // 3. Redirect to /chat/session=<30_digits_id>
+      navigateToSession(sessionId);
+    },
+    [defaultWorkspace, activeProvider, activeModel, loadSessions, navigateToSession]
+  );
+
+  const handleDeleteSession = useCallback(
+    async (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
+      await loadSessions();
+      setActiveSessionId((current) => {
+        if (current === id) {
+          window.history.pushState({}, '', '/');
+          return null;
+        }
+        return current;
+      });
+    },
+    [loadSessions]
+  );
+
+  const handleSelectWorkspace = useCallback(
+    async (newWorkspace: string, setAsDefault: boolean) => {
+      setDefaultWorkspace(newWorkspace);
+      if (setAsDefault) {
+        await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ defaultWorkspace: newWorkspace }),
+        });
+      }
+    },
+    []
+  );
+
+  const openSettings = useCallback(() => setSettingsOpen(true), []);
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  const openWorkspaceModal = useCallback(() => setWorkspaceModalOpen(true), []);
+  const closeWorkspaceModal = useCallback(() => setWorkspaceModalOpen(false), []);
+  const openMobileNav = useCallback(() => setMobileNavOpen(true), []);
 
   // Group sessions chronologically (Today, Yesterday, Previous)
   const groupedSessions = useMemo(() => {
@@ -180,7 +233,9 @@ export const App: React.FC = () => {
       {/* Left Sidebar / Navigation Rail (matches design.html) */}
       <aside
         id="sidebar"
-        className={`sidebar ${sidebarCollapsed ? 'is-collapsed' : ''}`}
+        className={`sidebar ${sidebarCollapsed ? 'is-collapsed' : ''} ${
+          mobileNavOpen ? 'is-mobile-open' : ''
+        }`}
         aria-label="Sidebar"
         onClick={(e) => {
           if (!sidebarCollapsed) return;
@@ -241,6 +296,26 @@ export const App: React.FC = () => {
               >
                 <rect x="3" y="4" width="18" height="16" rx="3" />
                 <line x1="9" y1="4" x2="9" y2="20" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className="icon-btn sidebar-mobile-close"
+              aria-label="Close navigation"
+              title="Close"
+              onClick={() => setMobileNavOpen(false)}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           </div>
@@ -390,47 +465,67 @@ export const App: React.FC = () => {
         </div>
       </aside>
 
+      {mobileNavOpen && (
+        <div
+          className="sidebar-backdrop"
+          aria-hidden="true"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
+
       {/* Route View: Home Page or Chat Page */}
       {activeSessionId ? (
-        <ChatPage
-          key={activeSessionId}
-          sessionId={activeSessionId}
-          workspace={defaultWorkspace}
-          activeProvider={activeProvider}
-          activeModel={activeModel}
-          onOpenSettings={() => setSettingsOpen(true)}
-          onOpenWorkspaceModal={() => setWorkspaceModalOpen(true)}
-          onSessionsChanged={loadSessions}
-        />
+        <Suspense fallback={<div className="route-fallback" />}>
+          <ChatPage
+            key={activeSessionId}
+            sessionId={activeSessionId}
+            workspace={defaultWorkspace}
+            activeProvider={activeProvider}
+            activeModel={activeModel}
+            onOpenSettings={openSettings}
+            onOpenWorkspaceModal={openWorkspaceModal}
+            onSessionsChanged={loadSessions}
+            onOpenMobileNav={openMobileNav}
+          />
+        </Suspense>
       ) : (
         <HomePage
           workspace={defaultWorkspace}
           activeProvider={activeProvider}
           activeModel={activeModel}
-          onOpenSettings={() => setSettingsOpen(true)}
-          onOpenWorkspaceModal={() => setWorkspaceModalOpen(true)}
+          onOpenSettings={openSettings}
+          onOpenWorkspaceModal={openWorkspaceModal}
           onStartNewSessionWithPrompt={handleStartNewSessionWithPrompt}
+          onOpenMobileNav={openMobileNav}
         />
       )}
 
-      {/* Settings Popup Modal */}
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        providers={providers}
-        activeProvider={activeProvider}
-        activeModel={activeModel}
-        reasoningEffort={reasoningEffort}
-        onRefreshSettings={loadSettings}
-      />
+      {/* Settings Popup Modal (lazy: heavy provider/model UI only loads on demand) */}
+      {settingsOpen && (
+        <Suspense fallback={null}>
+          <SettingsModal
+            isOpen={settingsOpen}
+            onClose={closeSettings}
+            providers={providers}
+            activeProvider={activeProvider}
+            activeModel={activeModel}
+            reasoningEffort={reasoningEffort}
+            onRefreshSettings={loadSettings}
+          />
+        </Suspense>
+      )}
 
-      {/* Workspace Selector & Folder Creator Modal */}
-      <WorkspaceModal
-        isOpen={workspaceModalOpen}
-        currentWorkspace={defaultWorkspace}
-        onClose={() => setWorkspaceModalOpen(false)}
-        onSelectWorkspace={handleSelectWorkspace}
-      />
+      {/* Workspace Selector & Folder Creator Modal (lazy) */}
+      {workspaceModalOpen && (
+        <Suspense fallback={null}>
+          <WorkspaceModal
+            isOpen={workspaceModalOpen}
+            currentWorkspace={defaultWorkspace}
+            onClose={closeWorkspaceModal}
+            onSelectWorkspace={handleSelectWorkspace}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

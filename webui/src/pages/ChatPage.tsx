@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import {
   Settings,
   Monitor,
@@ -7,14 +7,24 @@ import {
   Terminal as TerminalIcon,
   PanelRight,
   Cpu,
+  Menu,
 } from 'lucide-react';
 import { PromptBox, UploadedAttachment } from '../components/PromptBox';
 import { MarkdownRenderer } from '../components/MarkdownRenderer';
 import { ToolInlineCall, ToolActivityItem } from '../components/ToolInlineCall';
-import { ComputerTab } from '../components/ComputerTab';
-import { BrowserTab } from '../components/BrowserTab';
-import { FilesTab } from '../components/FilesTab';
-import { TerminalTab } from '../components/TerminalTab';
+
+const ComputerTab = lazy(() =>
+  import('../components/ComputerTab').then((m) => ({ default: m.ComputerTab }))
+);
+const BrowserTab = lazy(() =>
+  import('../components/BrowserTab').then((m) => ({ default: m.BrowserTab }))
+);
+const FilesTab = lazy(() =>
+  import('../components/FilesTab').then((m) => ({ default: m.FilesTab }))
+);
+const TerminalTab = lazy(() =>
+  import('../components/TerminalTab').then((m) => ({ default: m.TerminalTab }))
+);
 
 interface MessageItem {
   id: string;
@@ -36,6 +46,7 @@ interface ChatPageProps {
   onOpenSettings: () => void;
   onOpenWorkspaceModal: () => void;
   onSessionsChanged: () => void;
+  onOpenMobileNav?: () => void;
 }
 
 type RightTabType = 'computer' | 'browser' | 'files' | 'terminal';
@@ -55,6 +66,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   onOpenSettings,
   onOpenWorkspaceModal,
   onSessionsChanged,
+  onOpenMobileNav,
 }) => {
   const [prompt, setPrompt] = useState('');
   const [loadingReplay, setLoadingReplay] = useState(true);
@@ -345,6 +357,16 @@ export const ChatPage: React.FC<ChatPageProps> = ({
       {/* Top Bar with Context Usage, Right Panel Toggles, and Settings */}
       <header className="main-topbar">
         <div className="topbar-left">
+          <button
+            type="button"
+            className="icon-btn topbar-mobile-menu"
+            aria-label="Open navigation"
+            title="Menu"
+            onClick={onOpenMobileNav}
+          >
+            <Menu size={16} />
+          </button>
+
           <div className="app-topbar-brand">
             <span>Mythgram</span>
             <span className="version-block">v1</span>
@@ -613,18 +635,27 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             </div>
 
             <div className="right-panel-body">
-              {rightTab === 'computer' && (
-                <ComputerTab
-                  activities={activities}
-                  selectedActivityId={selectedActivityId}
-                  onSelectActivity={setSelectedActivityId}
-                />
-              )}
-              {rightTab === 'browser' && <BrowserTab />}
-              {rightTab === 'files' && <FilesTab workspace={sessionWorkspace} />}
-              {rightTab === 'terminal' && (
-                <TerminalTab workspace={sessionWorkspace} />
-              )}
+              <Suspense
+                fallback={
+                  <div className="panel-loading">
+                    <div className="spinner" />
+                    <span>Loading panel…</span>
+                  </div>
+                }
+              >
+                {rightTab === 'computer' && (
+                  <ComputerTab
+                    activities={activities}
+                    selectedActivityId={selectedActivityId}
+                    onSelectActivity={setSelectedActivityId}
+                  />
+                )}
+                {rightTab === 'browser' && <BrowserTab />}
+                {rightTab === 'files' && <FilesTab workspace={sessionWorkspace} />}
+                {rightTab === 'terminal' && (
+                  <TerminalTab workspace={sessionWorkspace} />
+                )}
+              </Suspense>
             </div>
           </aside>
         )}

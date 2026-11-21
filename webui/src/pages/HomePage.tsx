@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, Menu } from 'lucide-react';
 import { PromptBox, UploadedAttachment } from '../components/PromptBox';
 
 interface HomePageProps {
@@ -12,6 +12,7 @@ interface HomePageProps {
     prompt: string,
     attachments: UploadedAttachment[]
   ) => Promise<void>;
+  onOpenMobileNav?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -21,6 +22,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   onOpenSettings,
   onOpenWorkspaceModal,
   onStartNewSessionWithPrompt,
+  onOpenMobileNav,
 }) => {
   const [prompt, setPrompt] = useState('');
 
@@ -35,6 +37,16 @@ export const HomePage: React.FC<HomePageProps> = ({
       {/* Top Header Bar in Main Application */}
       <header className="main-topbar" aria-label="Application header">
         <div className="topbar-left">
+          <button
+            type="button"
+            className="icon-btn topbar-mobile-menu"
+            aria-label="Open navigation"
+            title="Menu"
+            onClick={onOpenMobileNav}
+          >
+            <Menu size={16} />
+          </button>
+
           <div className="app-topbar-brand">
             <span>Mythgram</span>
             <span className="version-block">v1</span>

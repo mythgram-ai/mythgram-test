@@ -2,17 +2,91 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#000000" />
     <title>Mythgram</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Non-blocking font load: paint instantly with system fonts, swap in Inter/JetBrains when ready -->
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      />
+    </noscript>
+    <!-- Critical boot styles: instant dark first paint + logo loader before the JS bundle resolves -->
+    <style>
+      html, body, #root {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        background-color: #000;
+        color: #f4f4f5;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      body { overflow: hidden; }
+      #boot-shell {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        background-color: #000;
+        z-index: 9999;
+        transition: opacity 0.25s ease;
+      }
+      #boot-shell.is-hidden { opacity: 0; pointer-events: none; }
+      .boot-mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background-color: #dc2626;
+        border: 1px solid #ef4444;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        animation: boot-pulse 1.4s ease-in-out infinite;
+      }
+      .boot-mark svg { width: 24px; height: 24px; color: #fff5f5; display: block; }
+      .boot-label {
+        font-size: 13px;
+        letter-spacing: 0.02em;
+        color: #71717a;
+      }
+      @keyframes boot-pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(0.94); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot-mark { animation: none; }
+      }
+    </style>
   </head>
   <body>
+    <div id="boot-shell" role="status" aria-label="Loading Mythgram">
+      <span class="boot-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 10.2L7.5 5.7C6.8 6.4 6.4 7.2 6.2 8.2L10 12L6.2 15.8C6.4 16.8 6.8 17.6 7.5 18.3L12 13.8L16.5 18.3C17.2 17.6 17.6 16.8 17.8 15.8L14 12L17.8 8.2C17.6 7.2 17.2 6.4 16.5 5.7L12 10.2Z" />
+        </svg>
+      </span>
+      <span class="boot-label">Loading Mythgram…</span>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
