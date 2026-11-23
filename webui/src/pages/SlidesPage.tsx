@@ -165,7 +165,8 @@ export const SlidesPage: React.FC<SlidesPageProps> = ({
                 fontSize: 13,
               }}
             >
-              Select a slide deck to view or download as HTML, PDF, PPTX, or Image.
+              Select a slide deck to preview, or download it as PNG, JPEG, SVG,
+              PDF, PPTX, or HTML.
             </div>
           )}
         </div>

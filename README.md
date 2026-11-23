@@ -21,7 +21,7 @@ Mythgram is an autonomous, general-purpose AI software engineering and operation
    - 2 built-in default skills (`fullstack-web-architect`, `automated-code-auditor`) plus custom skills created manually or via `create_skill`.
    - Dedicated lazy-loaded **Skills Page** (`/skills`) with `SKILL.md` editor and subfolder creation.
 5. **Slides System (`slide_projects` in SQLite)**:
-   - Organizes, manages, and presents 16:9 HTML slide decks with export/download support for **HTML, PDF, PPTX, and Image (SVG)**.
+   - Organizes, manages, and presents 16:9 HTML slide decks with export/download support for **PNG, JPEG, SVG, PDF, PPTX, and HTML**; each deck downloads as a single ZIP archive in the selected format.
    - Dedicated lazy-loaded **Slides Page** (`/slides`) and **Slides Tab** in Chat Page.
 
 ## Architecture & Directory Structure
