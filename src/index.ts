@@ -1,0 +1,828 @@
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { streamSSE } from 'hono/streaming';
+import { serve } from '@hono/node-server';
+import { WebSocketServer } from 'ws';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import { initDataDir, getDataDir } from './datadir/index.js';
+import { db, SlideItem } from './db/index.js';
+import {
+  getAllResolvedProviders,
+  fetchModelsForProvider,
+  BUILTIN_PROVIDERS_MAP,
+  getProviderRuntimeCredentials,
+} from './providers/index.js';
+import {
+  ALL_TOOLS,
+  SUB_AGENT_ALLOWED_TOOLS,
+  getOpenAIToolsList,
+} from './tools/index.js';
+import {
+  submitUserPromptToSession,
+  abortSessionRun,
+  isSessionRunning,
+  getDefaultWorkspace,
+  setDefaultWorkspace,
+  generate30DigitSessionId,
+} from './session/index.js';
+import { agentEvents } from './agents/agent.js';
+import { isSubAgentRunning } from './agents/sub-agent.js';
+import { listWorkspaceTree, InteractiveTerminalSession } from './worker/index.js';
+import {
+  listArtifacts,
+  getArtifactById,
+  updateArtifact,
+  deleteArtifact,
+  ensureArtifactsStore,
+} from './artifacts/index.js';
+import {
+  listAllSubAgents,
+  createOrUpdateCustomSubAgent,
+  deleteCustomSubAgent,
+  ensureSubAgentsStore,
+  RESTRICTED_SUB_AGENT_TOOLS,
+} from './sub-agents/index.js';
+import {
+  listSkills,
+  getSkillDetail,
+  createOrUpdateManualSkill,
+  deleteSkill,
+  ensureSkillsStore,
+} from './skills/index.js';
+import {
+  resolveUserInteraction,
+  getPendingInteractionsForSession,
+} from './tools/interactive-store.js';
+
+// Initialize .mythgram datadir and stores immediately on startup
+initDataDir();
+void ensureArtifactsStore();
+void ensureSubAgentsStore();
+void ensureSkillsStore();
+
+const app = new Hono();
+app.use('*', cors());
+
+// ==================== HEALTH & INFO ====================
+app.get('/api/health', (c) => {
+  const paths = getDataDir();
+  return c.json({
+    ok: true,
+    agent: 'mythgram',
+    version: '1.0.0',
+    dataDir: paths.dataDir,
+    defaultWorkspace: getDefaultWorkspace(),
+    toolsCount: ALL_TOOLS.length,
+  });
+});
+
+app.get('/api/tools', (c) => {
+  return c.json({
+    tools: getOpenAIToolsList(true),
+  });
+});
+
+// ==================== SETTINGS & PROVIDERS ====================
+app.get('/api/settings', (c) => {
+  const allSettings = db.getAllSettings();
+  const providers = getAllResolvedProviders();
+  return c.json({
+    activeProvider: allSettings.active_provider || 'pollinations',
+    activeModel: allSettings.active_model || 'openai',
+    reasoningEffort: allSettings.reasoning_effort || 'default',
+    defaultWorkspace: getDefaultWorkspace(),
+    providers,
+  });
+});
+
+app.post('/api/settings', async (c) => {
+  const body = await c.req.json();
+  if (body.activeProvider !== undefined) {
+    db.setSetting('active_provider', String(body.activeProvider));
+  }
+  if (body.activeModel !== undefined) {
+    db.setSetting('active_model', String(body.activeModel));
+  }
+  if (body.reasoningEffort !== undefined) {
+    db.setSetting('reasoning_effort', String(body.reasoningEffort));
+  }
+  if (body.defaultWorkspace !== undefined) {
+    setDefaultWorkspace(String(body.defaultWorkspace));
+  }
+  return c.json({ ok: true });
+});
+
+app.get('/api/providers', (c) => {
+  return c.json({
+    providers: getAllResolvedProviders(),
+  });
+});
+
+app.post('/api/providers/save', async (c) => {
+  const body = await c.req.json();
+  const providerId = String(body.id || `custom_${Date.now()}`);
+  const isBuiltin = BUILTIN_PROVIDERS_MAP.has(providerId);
+  const existing = db.getProviderConfig(providerId);
+  const builtin = BUILTIN_PROVIDERS_MAP.get(providerId);
+
+  const apiKey =
+    body.apiKey !== undefined && !String(body.apiKey).startsWith('••••')
+      ? String(body.apiKey)
+      : existing?.api_key ?? '';
+
+  db.saveProviderConfig({
+    provider_id: providerId,
+    name: body.name || existing?.name || builtin?.name || providerId,
+    base_url: body.baseUrl || existing?.base_url || builtin?.baseUrl || '',
+    api_key: apiKey,
+    models_url: body.modelsUrl ?? existing?.models_url ?? builtin?.modelsUrl,
+    selected_model: body.selectedModel ?? existing?.selected_model ?? '',
+    is_custom: isBuiltin ? 0 : 1,
+    manual_context_limit:
+      body.manualContextLimit !== undefined
+        ? body.manualContextLimit
+        : existing?.manual_context_limit,
+    manual_vision_support:
+      body.manualVisionSupport !== undefined
+        ? body.manualVisionSupport === null
+          ? null
+          : body.manualVisionSupport
+          ? 1
+          : 0
+        : existing?.manual_vision_support,
+  });
+
+  if (body.setAsActive) {
+    db.setSetting('active_provider', providerId);
+    if (body.selectedModel) {
+      db.setSetting('active_model', body.selectedModel);
+    }
+  }
+
+  return c.json({
+    ok: true,
+    providers: getAllResolvedProviders(),
+  });
+});
+
+app.delete('/api/providers/:id', (c) => {
+  const id = c.req.param('id');
+  if (BUILTIN_PROVIDERS_MAP.has(id)) {
+    return c.json({ error: 'Cannot delete a built-in provider' }, 400);
+  }
+  db.deleteProviderConfig(id);
+  return c.json({
+    ok: true,
+    providers: getAllResolvedProviders(),
+  });
+});
+
+app.post('/api/providers/:id/fetch-models', async (c) => {
+  const id = c.req.param('id');
+  const body = await c.req.json().catch(() => ({}));
+  try {
+    const models = await fetchModelsForProvider(
+      id,
+      body.baseUrl,
+      body.apiKey,
+      body.modelsUrl
+    );
+    return c.json({
+      ok: true,
+      models,
+      providers: getAllResolvedProviders(),
+    });
+  } catch (err: any) {
+    return c.json(
+      {
+        ok: false,
+        error: err?.message || 'Failed to fetch models from provider',
+      },
+      400
+    );
+  }
+});
+
+// ==================== WORKSPACE & FILES ====================
+app.get('/api/workspace', async (c) => {
+  const currentWorkspace = c.req.query('path') || getDefaultWorkspace();
+  const resolved = path.resolve(currentWorkspace);
+  const parentDir = path.dirname(resolved);
+  const folders = await listWorkspaceTree(resolved, {
+    onlyDirectories: true,
+    maxDepth: 2,
+  });
+
+  return c.json({
+    defaultWorkspace: getDefaultWorkspace(),
+    currentPath: resolved,
+    parentPath: parentDir !== resolved ? parentDir : null,
+    homeDir: os.homedir(),
+    folders,
+  });
+});
+
+app.post('/api/workspace/mkdir', async (c) => {
+  const body = await c.req.json();
+  const parentDir = path.resolve(body.parentPath || getDefaultWorkspace());
+  const folderName = String(body.folderName || '').trim();
+  if (!folderName) {
+    return c.json({ error: 'Folder name is required' }, 400);
+  }
+  const newFolderPath = path.join(parentDir, folderName);
+  await fs.mkdir(newFolderPath, { recursive: true });
+  return c.json({
+    ok: true,
+    createdPath: newFolderPath,
+  });
+});
+
+app.get('/api/files/tree', async (c) => {
+  const workspacePath = c.req.query('path') || getDefaultWorkspace();
+  const depth = Number(c.req.query('depth') || 4);
+  const tree = await listWorkspaceTree(workspacePath, {
+    onlyDirectories: false,
+    maxDepth: depth,
+  });
+  return c.json({
+    root: path.resolve(workspacePath),
+    tree,
+  });
+});
+
+app.get('/api/files/read', async (c) => {
+  const filePath = c.req.query('path');
+  if (!filePath) return c.json({ error: 'Missing path parameter' }, 400);
+  try {
+    const stat = await fs.stat(filePath);
+    if (stat.size > 5 * 1024 * 1024) {
+      return c.json({
+        path: filePath,
+        size: stat.size,
+        truncated: true,
+        content: '[File exceeds 5MB preview limit]',
+      });
+    }
+    const content = await fs.readFile(filePath, 'utf-8');
+    return c.json({
+      path: filePath,
+      size: stat.size,
+      content,
+    });
+  } catch (err: any) {
+    return c.json({ error: err?.message || 'Unable to read file' }, 404);
+  }
+});
+
+app.get('/api/files/download', async (c) => {
+  const filePath = c.req.query('path');
+  if (!filePath) return c.json({ error: 'Missing path parameter' }, 400);
+  try {
+    const buf = await fs.readFile(filePath);
+    const filename = path.basename(filePath);
+    return new Response(buf, {
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
+      },
+    });
+  } catch (err: any) {
+    return c.json({ error: err?.message || 'File not found' }, 404);
+  }
+});
+
+// ==================== ARTIFACTS (.mythgram/artifacts) ====================
+app.get('/api/artifacts', async (c) => {
+  const artifacts = await listArtifacts();
+  return c.json({ ok: true, artifacts });
+});
+
+app.get('/api/artifacts/:id', async (c) => {
+  const id = c.req.param('id');
+  const found = await getArtifactById(id);
+  if (!found) return c.json({ error: 'Artifact not found' }, 404);
+  return c.json({ ok: true, ...found });
+});
+
+app.put('/api/artifacts/:id', async (c) => {
+  const id = c.req.param('id');
+  const body = await c.req.json();
+  const updated = await updateArtifact(id, {
+    title: body.title ?? body.name,
+    description: body.description,
+    type: body.type,
+    content: body.content,
+  });
+  if (!updated) return c.json({ error: 'Artifact not found' }, 404);
+  return c.json({ ok: true, artifact: updated });
+});
+
+app.delete('/api/artifacts/:id', async (c) => {
+  const id = c.req.param('id');
+  const deleted = await deleteArtifact(id);
+  return c.json({ ok: deleted });
+});
+
+// ==================== SUB-AGENTS (.mythgram/sub-agents) ====================
+app.get('/api/sub-agents', async (c) => {
+  const subAgents = await listAllSubAgents();
+  return c.json({
+    ok: true,
+    subAgents,
+    allowedTools: SUB_AGENT_ALLOWED_TOOLS.map((t) => ({
+      name: t.name,
+      description: t.description,
+    })),
+    restrictedTools: Array.from(RESTRICTED_SUB_AGENT_TOOLS),
+  });
+});
+
+app.get('/api/sub-agents/allowed-tools', (c) => {
+  return c.json({
+    ok: true,
+    tools: SUB_AGENT_ALLOWED_TOOLS.map((t) => ({
+      name: t.name,
+      description: t.description,
+    })),
+    restrictedTools: Array.from(RESTRICTED_SUB_AGENT_TOOLS),
+  });
+});
+
+app.post('/api/sub-agents', async (c) => {
+  try {
+    const body = await c.req.json();
+    // Support creating 1 or multiple sub-agents in one call
+    if (Array.isArray(body.agents)) {
+      const created = [];
+      for (const item of body.agents) {
+        const sub = await createOrUpdateCustomSubAgent({
+          name: String(item.name || ''),
+          description: String(item.description || ''),
+          systemPrompt: String(item.systemPrompt || item.system_prompt || ''),
+          tools: Array.isArray(item.tools) ? item.tools : undefined,
+        });
+        created.push(sub);
+      }
+      const subAgents = await listAllSubAgents();
+      return c.json({ ok: true, created, subAgents });
+    }
+
+    const created = await createOrUpdateCustomSubAgent({
+      name: String(body.name || ''),
+      description: String(body.description || ''),
+      systemPrompt: String(body.systemPrompt || body.system_prompt || ''),
+      tools: Array.isArray(body.tools) ? body.tools : undefined,
+    });
+    const subAgents = await listAllSubAgents();
+    return c.json({ ok: true, created: [created], subAgents });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to save sub-agent' }, 400);
+  }
+});
+
+app.delete('/api/sub-agents/:name', async (c) => {
+  const name = c.req.param('name');
+  const res = await deleteCustomSubAgent(name);
+  if (!res.deleted) {
+    return c.json({ ok: false, error: res.reason || 'Cannot delete sub-agent' }, 400);
+  }
+  const subAgents = await listAllSubAgents();
+  return c.json({ ok: true, subAgents });
+});
+
+app.get('/api/sub-agent-runs/:runId', (c) => {
+  const runId = c.req.param('runId');
+  const run = db.getSubAgentRun(runId);
+  if (!run) return c.json({ error: 'Sub-agent run not found' }, 404);
+  const messages = db.getSessionMessages(runId);
+  const activities = db.getSessionToolActivities(runId);
+  return c.json({
+    ok: true,
+    run: {
+      ...run,
+      isRunning: isSubAgentRunning(runId),
+    },
+    messages,
+    activities,
+  });
+});
+
+app.get('/api/sub-agent-runs/:runId/stream', (c) => {
+  const runId = c.req.param('runId');
+
+  return streamSSE(c, async (stream) => {
+    const run = db.getSubAgentRun(runId);
+    const messages = db.getSessionMessages(runId);
+    const activities = db.getSessionToolActivities(runId);
+
+    await stream.writeSSE({
+      event: 'replay_snapshot',
+      data: JSON.stringify({
+        run: run
+          ? {
+              ...run,
+              isRunning: isSubAgentRunning(runId),
+            }
+          : null,
+        messages,
+        activities,
+      }),
+    });
+
+    let closed = false;
+    const unsubscribe = agentEvents.subscribe(runId, (evt) => {
+      if (closed) return;
+      stream
+        .writeSSE({
+          event: evt.type,
+          data: JSON.stringify(evt),
+        })
+        .catch(() => {
+          closed = true;
+        });
+    });
+
+    stream.onAbort(() => {
+      closed = true;
+      unsubscribe();
+    });
+
+    while (!closed) {
+      await stream.sleep(15000);
+      if (closed) break;
+      try {
+        await stream.writeSSE({
+          event: 'ping',
+          data: JSON.stringify({ t: Date.now() }),
+        });
+      } catch {
+        closed = true;
+        break;
+      }
+    }
+
+    unsubscribe();
+  });
+});
+
+// ==================== SKILLS (.mythgram/skills) ====================
+app.get('/api/skills', async (c) => {
+  const skills = await listSkills();
+  return c.json({ ok: true, skills });
+});
+
+app.get('/api/skills/:name', async (c) => {
+  const name = c.req.param('name');
+  const detail = await getSkillDetail(name);
+  if (!detail) return c.json({ error: 'Skill not found' }, 404);
+  return c.json({ ok: true, ...detail });
+});
+
+app.post('/api/skills', async (c) => {
+  try {
+    const body = await c.req.json();
+    const skill = await createOrUpdateManualSkill({
+      name: String(body.name || ''),
+      description: String(body.description || ''),
+      skillMdContent: String(body.skillMdContent || body.skill_md || ''),
+      subfolders: Array.isArray(body.subfolders) ? body.subfolders : [],
+      extraFiles: Array.isArray(body.extraFiles) ? body.extraFiles : [],
+    });
+    const skills = await listSkills();
+    return c.json({ ok: true, skill, skills });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to save skill' }, 400);
+  }
+});
+
+app.delete('/api/skills/:name', async (c) => {
+  const name = c.req.param('name');
+  const deleted = await deleteSkill(name);
+  const skills = await listSkills();
+  return c.json({ ok: deleted, skills });
+});
+
+// ==================== SLIDES (SQLite) ====================
+function parseSlideProjectRow(row: any) {
+  let slides: SlideItem[] = [];
+  try {
+    slides = JSON.parse(row.slides_json);
+  } catch {
+    slides = [];
+  }
+  return {
+    id: row.id,
+    name: row.name,
+    session_id: row.session_id,
+    slides_count: slides.length,
+    slides,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+app.get('/api/slides', (c) => {
+  const sessionId = c.req.query('sessionId');
+  const projects = db
+    .listSlideProjects(sessionId || undefined)
+    .map(parseSlideProjectRow);
+  return c.json({ ok: true, projects });
+});
+
+app.get('/api/slides/:id', (c) => {
+  const id = c.req.param('id');
+  const row = db.getSlideProject(id);
+  if (!row) return c.json({ error: 'Slide project not found' }, 404);
+  return c.json({ ok: true, project: parseSlideProjectRow(row) });
+});
+
+app.put('/api/slides/:id', async (c) => {
+  const id = c.req.param('id');
+  const row = db.getSlideProject(id);
+  if (!row) return c.json({ error: 'Slide project not found' }, 404);
+  const body = await c.req.json();
+  const parsed = parseSlideProjectRow(row);
+  const updated = db.upsertSlideProject({
+    id,
+    name: body.name ? String(body.name) : parsed.name,
+    sessionId: parsed.session_id,
+    slides: Array.isArray(body.slides) ? body.slides : parsed.slides,
+  });
+  return c.json({ ok: true, project: parseSlideProjectRow(updated) });
+});
+
+app.delete('/api/slides/:id', (c) => {
+  const id = c.req.param('id');
+  const deleted = db.deleteSlideProject(id);
+  return c.json({ ok: deleted });
+});
+
+// ==================== UPLOADS (.mythgram/uploads) ====================
+app.post('/api/uploads', async (c) => {
+  const paths = getDataDir();
+  const body = await c.req.parseBody({ all: true });
+  const rawFiles = body['files'];
+  const fileArray = Array.isArray(rawFiles) ? rawFiles : rawFiles ? [rawFiles] : [];
+  const relativePathsRaw = body['relativePaths'];
+  const relPaths = Array.isArray(relativePathsRaw)
+    ? relativePathsRaw.map(String)
+    : relativePathsRaw
+    ? [String(relativePathsRaw)]
+    : [];
+
+  const batchFolder = path.join(paths.uploadsDir, `batch_${Date.now()}`);
+  await fs.mkdir(batchFolder, { recursive: true });
+
+  const saved: { name: string; path: string; size: number; type: string }[] = [];
+
+  for (let i = 0; i < fileArray.length; i++) {
+    const item = fileArray[i];
+    if (item && typeof item === 'object' && 'arrayBuffer' in item) {
+      const f = item as File;
+      const relName = relPaths[i] || f.name || `upload_${i}`;
+      const safeRel = relName.replace(/^(\.\.(\/|\\|$))+/, '');
+      const destPath = path.join(batchFolder, safeRel);
+      await fs.mkdir(path.dirname(destPath), { recursive: true });
+      const buf = Buffer.from(await f.arrayBuffer());
+      await fs.writeFile(destPath, buf);
+      saved.push({
+        name: relName,
+        path: destPath,
+        size: buf.length,
+        type: f.type || 'application/octet-stream',
+      });
+    }
+  }
+
+  return c.json({
+    ok: true,
+    uploadsDir: batchFolder,
+    files: saved,
+  });
+});
+
+// ==================== SESSIONS & CHAT ====================
+app.get('/api/sessions', (c) => {
+  const sessions = db.listSessions().map((s) => ({
+    ...s,
+    isRunning: isSessionRunning(s.id),
+  }));
+  return c.json({ sessions });
+});
+
+app.post('/api/sessions/new-id', (c) => {
+  return c.json({ sessionId: generate30DigitSessionId() });
+});
+
+app.get('/api/sessions/:id', (c) => {
+  const id = c.req.param('id');
+  const session = db.getSession(id);
+  if (!session) {
+    return c.json({ error: 'Session not found' }, 404);
+  }
+  const messages = db.getSessionMessages(id);
+  const activities = db.getSessionToolActivities(id);
+  const subAgentRuns = db.getSessionSubAgentRuns(id).map((r) => ({
+    ...r,
+    isRunning: isSubAgentRunning(r.id),
+  }));
+  const todos = db.getSessionTodos(id);
+  const pendingInteractions = getPendingInteractionsForSession(id);
+  const creds = getProviderRuntimeCredentials(session.provider_id);
+
+  return c.json({
+    session: {
+      ...session,
+      isRunning: isSessionRunning(id),
+      contextWindow: creds.contextWindow,
+    },
+    messages,
+    activities,
+    subAgentRuns,
+    todos,
+    pendingInteractions,
+  });
+});
+
+app.get('/api/sessions/:id/todos', (c) => {
+  const id = c.req.param('id');
+  return c.json({ ok: true, todos: db.getSessionTodos(id) });
+});
+
+app.post('/api/sessions/:id/interactive-response', async (c) => {
+  const body = await c.req.json();
+  const promptId = String(body.promptId || body.toolCallId || '');
+  if (!promptId) {
+    return c.json({ error: 'promptId is required' }, 400);
+  }
+  const resolved = resolveUserInteraction(promptId, body.response);
+  return c.json({ ok: true, resolved });
+});
+
+app.delete('/api/sessions/:id', (c) => {
+  const id = c.req.param('id');
+  abortSessionRun(id);
+  db.deleteSession(id);
+  return c.json({ ok: true });
+});
+
+app.post('/api/sessions/:id/prompt', async (c) => {
+  const id = c.req.param('id');
+  const body = await c.req.json();
+  const result = await submitUserPromptToSession({
+    sessionId: id,
+    prompt: String(body.prompt || ''),
+    workspace: body.workspace,
+    providerId: body.providerId,
+    modelId: body.modelId,
+    attachments: body.attachments,
+  });
+
+  return c.json({
+    ok: true,
+    session: result.session,
+    userMessageId: result.userMessageId,
+  });
+});
+
+app.post('/api/sessions/:id/abort', (c) => {
+  const id = c.req.param('id');
+  const aborted = abortSessionRun(id);
+  return c.json({ ok: true, aborted });
+});
+
+/**
+ * Live SSE stream endpoint for a session.
+ * Immediately replays current state (including any in-progress RAM-buffered streaming message,
+ * tool activities, sub-agent runs, todos, and pending interactive prompts) so browser refresh
+ * seamlessly continues streaming without losing a token.
+ */
+app.get('/api/sessions/:id/stream', (c) => {
+  const sessionId = c.req.param('id');
+
+  return streamSSE(c, async (stream) => {
+    const session = db.getSession(sessionId);
+    const messages = db.getSessionMessages(sessionId);
+    const activities = db.getSessionToolActivities(sessionId);
+    const subAgentRuns = db.getSessionSubAgentRuns(sessionId).map((r) => ({
+      ...r,
+      isRunning: isSubAgentRunning(r.id),
+    }));
+    const todos = db.getSessionTodos(sessionId);
+    const pendingInteractions = getPendingInteractionsForSession(sessionId);
+    const creds = session
+      ? getProviderRuntimeCredentials(session.provider_id)
+      : { contextWindow: 128000 };
+
+    // 1. Replay current state snapshot immediately upon connect / refresh
+    await stream.writeSSE({
+      event: 'replay_snapshot',
+      data: JSON.stringify({
+        session: session
+          ? {
+              ...session,
+              isRunning: isSessionRunning(sessionId),
+              contextWindow: creds.contextWindow,
+            }
+          : null,
+        messages,
+        activities,
+        subAgentRuns,
+        todos,
+        pendingInteractions,
+      }),
+    });
+
+    // 2. Subscribe to live events from the background agent loop
+    let closed = false;
+    const unsubscribe = agentEvents.subscribe(sessionId, (evt) => {
+      if (closed) return;
+      stream
+        .writeSSE({
+          event: evt.type,
+          data: JSON.stringify(evt),
+        })
+        .catch(() => {
+          closed = true;
+        });
+    });
+
+    stream.onAbort(() => {
+      closed = true;
+      unsubscribe();
+    });
+
+    // Keep SSE connection alive with periodic heartbeats
+    while (!closed) {
+      await stream.sleep(15000);
+      if (closed) break;
+      try {
+        await stream.writeSSE({
+          event: 'ping',
+          data: JSON.stringify({ t: Date.now() }),
+        });
+      } catch {
+        closed = true;
+        break;
+      }
+    }
+
+    unsubscribe();
+  });
+});
+
+const PORT = Number(process.env.PORT || 1000);
+
+const server = serve(
+  {
+    fetch: app.fetch,
+    port: PORT,
+    hostname: '0.0.0.0',
+  },
+  (info) => {
+    console.log(`[Mythgram Backend] Listening on http://0.0.0.0:${info.port}`);
+    console.log(`[Mythgram Datadir] ${getDataDir().dataDir}`);
+  }
+);
+
+// Attach WebSocket server on `/api/terminal/ws` for xterm.js interactive local terminal
+const wss = new WebSocketServer({ noServer: true });
+
+server.on('upgrade', (request, socket, head) => {
+  const url = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`);
+  if (url.pathname === '/api/terminal/ws') {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  } else {
+    socket.destroy();
+  }
+});
+
+wss.on('connection', (ws, request) => {
+  const url = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`);
+  const cwd = url.searchParams.get('cwd') || getDefaultWorkspace();
+
+  const term = new InteractiveTerminalSession(cwd, (output) => {
+    if (ws.readyState === ws.OPEN) {
+      ws.send(JSON.stringify({ type: 'output', data: output }));
+    }
+  });
+
+  ws.on('message', (raw) => {
+    try {
+      const msg = JSON.parse(raw.toString());
+      if (msg.type === 'input' && typeof msg.data === 'string') {
+        term.write(msg.data);
+      }
+    } catch {
+      term.write(raw.toString());
+    }
+  });
+
+  ws.on('close', () => {
+    term.kill();
+  });
+});

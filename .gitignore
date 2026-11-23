@@ -1,0 +1,14 @@
+node_modules/
+webui/node_modules/
+webui/dist/
+.mythgram/
+.pm2/
+pids/
+logs/
+*.log
+*.pid
+.env
+*.backup
+*.bak
+*.tar.gz
+*.zip
