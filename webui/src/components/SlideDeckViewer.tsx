@@ -1,14 +1,27 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
   Download,
-  FileCode,
   FileDown,
-  Image as ImageIcon,
-  Presentation,
+  Loader2,
   Trash2,
 } from 'lucide-react';
+import {
+  EXPORT_FORMATS,
+  SLIDE_HEIGHT,
+  SLIDE_WIDTH,
+  buildDeckArchive,
+  buildDeckPdf,
+  buildDeckPptx,
+  buildSlideSvg,
+  downloadBlob,
+  renderSlideToJpegBlob,
+  renderSlideToPngBlob,
+  safeFileName,
+  type ExportableSlide,
+  type SlideExportFormat,
+} from '../lib/slideExport';
 
 export interface SlideItemData {
   slide_number: number;
@@ -31,146 +44,122 @@ interface SlideDeckViewerProps {
   onDeleteProject?: (id: string) => void;
 }
 
+const MIN_SCALE = 0.1;
+
 export const SlideDeckViewer: React.FC<SlideDeckViewerProps> = ({
   project,
   onDeleteProject,
 }) => {
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [exporting, setExporting] = useState<string | null>(null);
+  const [exportFormat, setExportFormat] = useState<SlideExportFormat>('png');
+  const [busy, setBusy] = useState<'all' | 'current' | null>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [scale, setScale] = useState(1);
+  const stageRef = useRef<HTMLDivElement | null>(null);
 
-  const slides = project.slides || [];
+  const slides = useMemo(
+    () => [...(project.slides || [])].sort((a, b) => a.slide_number - b.slide_number),
+    [project.slides]
+  );
   const activeSlide = slides[currentIdx] || slides[0] || null;
 
-  const handleDownloadHtml = () => {
-    const combinedHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>${project.name}</title>
-  <style>
-    body { margin: 0; background: #09090b; color: #f4f4f5; font-family: system-ui, sans-serif; }
-    .slide-frame { width: 1280px; height: 720px; margin: 24px auto; border: 1px solid #27272a; box-shadow: 0 12px 32px rgba(0,0,0,0.5); overflow: hidden; background: #fff; page-break-after: always; }
-    iframe { width: 100%; height: 100%; border: 0; }
-  </style>
-</head>
-<body>
-${slides
-  .map(
-    (s) =>
-      `<div class="slide-frame"><iframe srcdoc="${s.html_content
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')}"></iframe></div>`
-  )
-  .join('\n')}
-</body>
-</html>`;
-    const blob = new Blob([combinedHtml], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${project.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  // Keep the active slide in range when the deck changes underneath us.
+  useEffect(() => {
+    setCurrentIdx(0);
+  }, [project.id]);
 
-  const handleDownloadPdf = () => {
-    setExporting('pdf');
-    const printWin = window.open('', '_blank', 'width=1280,height=720');
-    if (!printWin) {
-      setExporting(null);
-      return;
+  // Scale the fixed 1280x720 slide stage to fit the available space while
+  // preserving its exact aspect ratio. The iframe itself always remains a true
+  // 1280x720 viewport, so slide layouts never get cropped.
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const update = () => {
+      const width = el.clientWidth;
+      const height = el.clientHeight;
+      if (width <= 0 || height <= 0) return;
+      const fitted = Math.min(width / SLIDE_WIDTH, height / SLIDE_HEIGHT, 1);
+      setScale(fitted > MIN_SCALE ? fitted : MIN_SCALE);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    window.addEventListener('resize', update);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
+  const formatMeta = useMemo(
+    () => EXPORT_FORMATS.find((f) => f.value === exportFormat) || EXPORT_FORMATS[0],
+    [exportFormat]
+  );
+
+  const runExport = async (scope: 'all' | 'current') => {
+    if (slides.length === 0 || busy) return;
+    setBusy(scope);
+    setError(null);
+    setProgress(null);
+    try {
+      if (scope === 'current') {
+        await exportCurrentSlide();
+      } else {
+        const onProgress = (done: number, total: number) => setProgress({ done, total });
+        const { blob, fileName } = await buildDeckArchive(
+          exportFormat,
+          { id: project.id, name: project.name },
+          slides,
+          onProgress
+        );
+        downloadBlob(blob, fileName);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Export failed.');
+    } finally {
+      setBusy(null);
+      setProgress(null);
     }
-    const html = `<!DOCTYPE html>
-<html>
-<head>
-  <title>${project.name} - PDF Export</title>
-  <style>
-    @page { size: 1280px 720px; margin: 0; }
-    body { margin: 0; padding: 0; background: #fff; }
-    .page { width: 1280px; height: 720px; page-break-after: always; overflow: hidden; position: relative; }
-    iframe { width: 1280px; height: 720px; border: 0; }
-  </style>
-</head>
-<body>
-${slides
-  .map(
-    (s) =>
-      `<div class="page"><iframe srcdoc="${s.html_content
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')}"></iframe></div>`
-  )
-  .join('\n')}
-<script>
-  window.onload = function() {
-    setTimeout(function() { window.print(); }, 600);
-  };
-</script>
-</body>
-</html>`;
-    printWin.document.open();
-    printWin.document.write(html);
-    printWin.document.close();
-    setExporting(null);
   };
 
-  const handleDownloadImage = async () => {
+  const exportCurrentSlide = async () => {
     if (!activeSlide) return;
-    setExporting('image');
-    try {
-      const svgData = `<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720">
-        <foreignObject width="100%" height="100%">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="width:1280px;height:720px;overflow:hidden;">
-            ${activeSlide.html_content}
-          </div>
-        </foreignObject>
-      </svg>`;
-      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(svgBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${project.name.replace(/[^a-zA-Z0-9_-]/g, '_')}_slide_${
-        activeSlide.slide_number
-      }.svg`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } finally {
-      setExporting(null);
+    const base = safeFileName(project.name);
+    const name = `${base}_slide_${String(activeSlide.slide_number).padStart(2, '0')}`;
+    const single: ExportableSlide[] = [
+      { slide_number: activeSlide.slide_number, html_content: activeSlide.html_content },
+    ];
+
+    if (exportFormat === 'png') {
+      downloadBlob(await renderSlideToPngBlob(activeSlide.html_content, 1), `${name}.png`);
+    } else if (exportFormat === 'jpeg') {
+      downloadBlob(await renderSlideToJpegBlob(activeSlide.html_content, 1), `${name}.jpg`);
+    } else if (exportFormat === 'svg') {
+      const svg = await buildSlideSvg(activeSlide.html_content);
+      downloadBlob(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), `${name}.svg`);
+    } else if (exportFormat === 'html') {
+      downloadBlob(
+        new Blob([activeSlide.html_content], { type: 'text/html;charset=utf-8' }),
+        `${name}.html`
+      );
+    } else if (exportFormat === 'pdf') {
+      const blob = await buildDeckPdf(single, (done, total) => setProgress({ done, total }));
+      downloadBlob(blob, `${name}.pdf`);
+    } else if (exportFormat === 'pptx') {
+      const blob = await buildDeckPptx(project.name, single, (done, total) =>
+        setProgress({ done, total })
+      );
+      downloadBlob(blob, `${name}.pptx`);
     }
   };
 
-  const handleDownloadPptx = () => {
-    setExporting('pptx');
-    try {
-      // Generates a PowerPoint-compatible MHT/HTML presentation file (.pptx / .ppt)
-      const pptContent = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
-xmlns:w="urn:schemas-microsoft-com:office:powerpoint"
-xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-<meta charset="utf-8" />
-<title>${project.name}</title>
-<style>
-  .slide { width: 1280px; height: 720px; page-break-after: always; overflow: hidden; }
-</style>
-</head>
-<body>
-${slides
-  .map((s) => `<div class="slide">${s.html_content}</div>`)
-  .join('\n')}
-</body>
-</html>`;
-      const blob = new Blob([pptContent], {
-        type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${project.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.pptx`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } finally {
-      setExporting(null);
-    }
-  };
+  const busyLabel =
+    busy === 'all'
+      ? `Exporting ${formatMeta.label}...`
+      : busy === 'current'
+      ? `Exporting this slide...`
+      : '';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#09090b' }}>
@@ -196,49 +185,47 @@ ${slides
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className="btn-secondary inline-center"
-            style={{ padding: '4px 9px', fontSize: 11.5 }}
-            onClick={handleDownloadHtml}
-            title="Download as HTML file"
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <label
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: '#9e9ea7' }}
+            title="Choose the export format"
           >
-            <FileCode size={12} />
-            HTML
-          </button>
+            Format
+            <select
+              className="input-field"
+              style={{ padding: '4px 8px', fontSize: 11.5, width: 'auto', minWidth: 118 }}
+              value={exportFormat}
+              disabled={!!busy}
+              onChange={(e) => setExportFormat(e.target.value as SlideExportFormat)}
+            >
+              {EXPORT_FORMATS.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <button
             type="button"
             className="btn-secondary inline-center"
             style={{ padding: '4px 9px', fontSize: 11.5 }}
-            onClick={handleDownloadPdf}
-            disabled={exporting === 'pdf'}
-            title="Print / Save as PDF"
+            onClick={() => runExport('current')}
+            disabled={!!busy || !activeSlide}
+            title={`Download the current slide as ${formatMeta.label}`}
           >
             <FileDown size={12} />
-            PDF
+            This slide
           </button>
           <button
             type="button"
-            className="btn-secondary inline-center"
-            style={{ padding: '4px 9px', fontSize: 11.5 }}
-            onClick={handleDownloadPptx}
-            disabled={exporting === 'pptx'}
-            title="Download as PPTX"
+            className="btn-primary inline-center"
+            style={{ padding: '4px 10px', fontSize: 11.5, minHeight: 26 }}
+            onClick={() => runExport('all')}
+            disabled={!!busy || slides.length === 0}
+            title={`Download all ${slides.length} slides as ${formatMeta.label} in one ZIP file`}
           >
-            <Presentation size={12} />
-            PPTX
-          </button>
-          <button
-            type="button"
-            className="btn-secondary inline-center"
-            style={{ padding: '4px 9px', fontSize: 11.5 }}
-            onClick={handleDownloadImage}
-            disabled={exporting === 'image'}
-            title="Download current slide as SVG Image"
-          >
-            <ImageIcon size={12} />
-            Image
+            {busy ? <Loader2 size={12} className="spin" /> : <Download size={12} />}
+            Download all (.zip)
           </button>
           {onDeleteProject && (
             <button
@@ -253,41 +240,71 @@ ${slides
         </div>
       </div>
 
-      {/* Main Slide Canvas */}
+      {(busyLabel || error) && (
+        <div
+          style={{
+            padding: '6px 14px',
+            fontSize: 11.5,
+            color: error ? '#f87171' : '#9e9ea7',
+            backgroundColor: error ? '#1f1113' : '#101014',
+            borderBottom: '1px solid #1e1e22',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          {busyLabel}
+          {progress && (
+            <span style={{ color: '#60a5fa' }}>
+              {progress.done}/{progress.total}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Main Slide Stage */}
       <div
+        ref={stageRef}
         style={{
           flex: 1,
           minHeight: 0,
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           padding: 16,
-          overflow: 'auto',
+          overflow: 'hidden',
         }}
       >
         {activeSlide ? (
           <div
             style={{
-              width: '100%',
-              maxWidth: 880,
-              aspectRatio: '16 / 9',
+              width: SLIDE_WIDTH * scale,
+              height: SLIDE_HEIGHT * scale,
+              position: 'relative',
               backgroundColor: '#ffffff',
-              borderRadius: 8,
+              borderRadius: Math.max(2, 8 * scale),
               overflow: 'hidden',
               border: '1px solid #27272f',
               boxShadow: '0 10px 30px rgba(0,0,0,0.55)',
-              position: 'relative',
+              flexShrink: 0,
             }}
           >
             <iframe
               key={`${project.id}_${activeSlide.slide_number}`}
               title={`Slide ${activeSlide.slide_number}`}
               srcDoc={activeSlide.html_content}
+              width={SLIDE_WIDTH}
+              height={SLIDE_HEIGHT}
               style={{
-                width: '100%',
-                height: '100%',
+                width: SLIDE_WIDTH,
+                height: SLIDE_HEIGHT,
                 border: 'none',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                transform: `scale(${scale})`,
+                transformOrigin: 'top left',
+                backgroundColor: '#ffffff',
               }}
               sandbox="allow-scripts allow-same-origin"
             />
@@ -295,43 +312,42 @@ ${slides
         ) : (
           <div style={{ color: '#71717a', fontSize: 13 }}>No slides in project.</div>
         )}
-
-        {/* Slide Navigation Controls */}
-        {slides.length > 0 && (
-          <div
-            style={{
-              marginTop: 12,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-            }}
-          >
-            <button
-              type="button"
-              className="btn-secondary inline-center"
-              disabled={currentIdx <= 0}
-              onClick={() => setCurrentIdx((i) => Math.max(0, i - 1))}
-            >
-              <ChevronLeft size={14} />
-              Prev
-            </button>
-            <span style={{ fontSize: 12, color: '#d4d4d8', fontFamily: 'JetBrains Mono, monospace' }}>
-              Slide {currentIdx + 1} of {slides.length}
-            </span>
-            <button
-              type="button"
-              className="btn-secondary inline-center"
-              disabled={currentIdx >= slides.length - 1}
-              onClick={() =>
-                setCurrentIdx((i) => Math.min(slides.length - 1, i + 1))
-              }
-            >
-              Next
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        )}
       </div>
+
+      {/* Slide Navigation Controls */}
+      {slides.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            padding: '4px 16px 8px',
+          }}
+        >
+          <button
+            type="button"
+            className="btn-secondary inline-center"
+            disabled={currentIdx <= 0}
+            onClick={() => setCurrentIdx((i) => Math.max(0, i - 1))}
+          >
+            <ChevronLeft size={14} />
+            Prev
+          </button>
+          <span style={{ fontSize: 12, color: '#d4d4d8', fontFamily: 'JetBrains Mono, monospace' }}>
+            Slide {currentIdx + 1} of {slides.length}
+          </span>
+          <button
+            type="button"
+            className="btn-secondary inline-center"
+            disabled={currentIdx >= slides.length - 1}
+            onClick={() => setCurrentIdx((i) => Math.min(slides.length - 1, i + 1))}
+          >
+            Next
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      )}
 
       {/* Bottom Thumbnail Strip */}
       {slides.length > 1 && (
@@ -347,16 +363,13 @@ ${slides
         >
           {slides.map((s, idx) => (
             <button
-              key={s.slide_number}
+              key={`${s.slide_number}_${idx}`}
               type="button"
               onClick={() => setCurrentIdx(idx)}
               style={{
                 padding: '6px 12px',
                 borderRadius: 6,
-                border:
-                  idx === currentIdx
-                    ? '1px solid #60a5fa'
-                    : '1px solid #27272f',
+                border: idx === currentIdx ? '1px solid #60a5fa' : '1px solid #27272f',
                 backgroundColor: idx === currentIdx ? '#1e1e28' : '#151519',
                 color: idx === currentIdx ? '#f4f4f5' : '#9e9ea7',
                 fontSize: 11.5,

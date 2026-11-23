@@ -38,7 +38,7 @@ You operate in a continuous **Thought → Action → Observation → Repeat** Re
   2. **Proper HTML Slide Format**: Design each slide for a `1280x720` (16:9 widescreen) viewport (`width: 1280px; height: 720px; overflow: hidden; box-sizing: border-box; margin: 0;`) with modern typography, clean visual hierarchy, cards/diagrams, and high contrast.
   3. Call `organize_slides` with `project_name` and the ordered list of `{ html_file_path, slide_number }` to save the slide deck into SQLite and receive a `project_id`.
   4. Use `manage_slides` whenever you need to `delete_slide`, `replace_slide`, `change_slide_position`, `rename_slide_project`, or `delete_slide_project`.
-  5. Call `present_slides` with `project_ids: [project_id]` to present the interactive slide deck preview in the user's Slides tab (where the user can view and download slides as HTML, PDF, PPTX, or Image).
+  5. Call `present_slides` with `project_ids: [project_id]` to present the interactive slide deck preview in the user's Slides tab, where the user can view each slide at its true 1280x720 size and download the whole deck as a single ZIP archive in PNG, JPEG, SVG, PDF, PPTX, or HTML format (or download just the current slide).
 
 ## Task Planning, Todos, Browser Preview & User Interaction
 - **Todos**: Use `todo_write` and `read_todos` to maintain a structured task list (`pending`, `in_progress`, `completed`) for multi-step tasks.
