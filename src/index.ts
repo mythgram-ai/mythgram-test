@@ -55,12 +55,25 @@ import {
   resolveUserInteraction,
   getPendingInteractionsForSession,
 } from './tools/interactive-store.js';
+import {
+  initializeMcp,
+  listMcpServerViews,
+  addAndConnectLocal,
+  addAndConnectRemote,
+  updateMcpServer,
+  refreshServerCache,
+  mcpManager,
+  normalizeLocalConfig,
+  ensureMcpStore,
+} from './mcp/index.js';
 
 // Initialize .mythgram datadir and stores immediately on startup
 initDataDir();
 void ensureArtifactsStore();
 void ensureSubAgentsStore();
 void ensureSkillsStore();
+void ensureMcpStore();
+void initializeMcp();
 
 const app = new Hono();
 app.use('*', cors());
@@ -465,6 +478,131 @@ app.get('/api/sub-agent-runs/:runId/stream', (c) => {
 
     unsubscribe();
   });
+});
+
+// ==================== MCP SERVERS (.mythgram/mcp) ====================
+function mcpPublicBaseUrl(c: any): string {
+  const fromEnv = process.env.MYTHGRAM_PUBLIC_URL;
+  if (fromEnv) return fromEnv.replace(/\/+$/, '');
+  return new URL(c.req.url).origin;
+}
+
+app.get('/api/mcp/servers', async (c) => {
+  const servers = await listMcpServerViews();
+  return c.json({ ok: true, servers });
+});
+
+app.post('/api/mcp/servers', async (c) => {
+  try {
+    const body = await c.req.json();
+    const name = String(body.name || '').trim();
+    const description = String(body.description || '').trim();
+    if (!name) return c.json({ ok: false, error: 'Server name is required.' }, 400);
+    if (!description) return c.json({ ok: false, error: 'Description is required.' }, 400);
+    const kind = body.kind === 'remote' ? 'remote' : 'local';
+    const publicBaseUrl = mcpPublicBaseUrl(c);
+
+    if (kind === 'local') {
+      let rawConfig = body.configJson ?? body.mcpconfig_json ?? body.config;
+      if (typeof rawConfig === 'string') rawConfig = JSON.parse(rawConfig);
+      const config = normalizeLocalConfig(rawConfig);
+      const { server, state } = await addAndConnectLocal({
+        name,
+        description,
+        config,
+        publicBaseUrl,
+      });
+      await refreshServerCache();
+      const view = await mcpManager.toView(server);
+      return c.json({ ok: state.status === 'connected', server: view, error: state.error });
+    }
+
+    const url = String(body.url || '').trim();
+    if (!/^https?:\/\//i.test(url)) {
+      return c.json({ ok: false, error: 'A valid http(s) URL is required.' }, 400);
+    }
+    const authType = body.auth_type === 'oauth' ? 'oauth' : 'no_auth';
+    const { server, state } = await addAndConnectRemote({
+      name,
+      description,
+      url,
+      authType,
+      publicBaseUrl,
+    });
+    await refreshServerCache();
+    const view = await mcpManager.toView(server);
+    return c.json({ ok: state.status === 'connected', server: view, error: state.error });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to add MCP server.' }, 400);
+  }
+});
+
+app.patch('/api/mcp/servers/:id', async (c) => {
+  try {
+    const id = c.req.param('id');
+    const body = await c.req.json();
+    const patch: any = {};
+    if (typeof body.enabled === 'boolean') patch.enabled = body.enabled;
+    if (typeof body.allow_sub_agents === 'boolean') patch.allow_sub_agents = body.allow_sub_agents;
+    if (Array.isArray(body.disabled_tools)) patch.disabled_tools = body.disabled_tools.map(String);
+    if (typeof body.description === 'string') patch.description = body.description;
+    const updated = await updateMcpServer(id, patch);
+    if (!updated.enabled) mcpManager.disconnect(id);
+    const view = await mcpManager.toView(updated);
+    return c.json({ ok: true, server: view });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to update MCP server.' }, 400);
+  }
+});
+
+app.delete('/api/mcp/servers/:id', async (c) => {
+  const id = c.req.param('id');
+  const deleted = await mcpManager.remove(id);
+  await refreshServerCache();
+  const servers = await listMcpServerViews();
+  return c.json({ ok: deleted, servers });
+});
+
+app.post('/api/mcp/servers/:id/connect', async (c) => {
+  try {
+    const id = c.req.param('id');
+    const state = await mcpManager.reconnect(id, mcpPublicBaseUrl(c));
+    const server = await mcpManager.listViews().then((v) => v.find((s) => s.id === id));
+    return c.json({
+      ok: state.status === 'connected',
+      status: state.status,
+      error: state.error,
+      authorization_url: state.authorizationUrl,
+      server,
+    });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to connect MCP server.' }, 400);
+  }
+});
+
+app.post('/api/mcp/servers/:id/disconnect', async (c) => {
+  const id = c.req.param('id');
+  mcpManager.disconnect(id);
+  const server = (await mcpManager.listViews()).find((s) => s.id === id);
+  return c.json({ ok: true, server });
+});
+
+app.get('/api/mcp/oauth/callback', async (c) => {
+  const webuiBase = (process.env.MYTHGRAM_WEBUI_URL || 'http://localhost:2000').replace(/\/+$/, '');
+  const serverId = c.req.query('serverId') || '';
+  const code = c.req.query('code') || '';
+  const error = c.req.query('error');
+  if (error) {
+    return c.redirect(`${webuiBase}/mcp?oauth=error&reason=${encodeURIComponent(error)}`);
+  }
+  try {
+    await mcpManager.finishOAuth(serverId, code);
+    return c.redirect(`${webuiBase}/mcp?oauth=success`);
+  } catch (err: any) {
+    return c.redirect(
+      `${webuiBase}/mcp?oauth=error&reason=${encodeURIComponent(err?.message || 'oauth_failed')}`
+    );
+  }
 });
 
 // ==================== SKILLS (.mythgram/skills) ====================

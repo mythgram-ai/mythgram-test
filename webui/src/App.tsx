@@ -18,6 +18,7 @@ import {
 import { HomePage } from './pages/HomePage';
 import type { ProviderState } from './components/SettingsModal';
 import type { UploadedAttachment } from './components/PromptBox';
+import { McpIcon } from './components/McpIcon';
 
 const ChatPage = lazy(() =>
   import('./pages/ChatPage').then((m) => ({ default: m.ChatPage }))
@@ -33,6 +34,9 @@ const SkillsPage = lazy(() =>
 );
 const SlidesPage = lazy(() =>
   import('./pages/SlidesPage').then((m) => ({ default: m.SlidesPage }))
+);
+const McpPage = lazy(() =>
+  import('./pages/McpPage').then((m) => ({ default: m.McpPage }))
 );
 const SettingsModal = lazy(() =>
   import('./components/SettingsModal').then((m) => ({ default: m.SettingsModal }))
@@ -56,6 +60,9 @@ const preloadSkillsPage = () => {
 const preloadSlidesPage = () => {
   void import('./pages/SlidesPage');
 };
+const preloadMcpPage = () => {
+  void import('./pages/McpPage');
+};
 
 type ActivePageType =
   | 'home'
@@ -63,7 +70,8 @@ type ActivePageType =
   | 'artifacts'
   | 'subagents'
   | 'skills'
-  | 'slides';
+  | 'slides'
+  | 'mcp';
 
 interface SessionSummary {
   id: string;
@@ -93,6 +101,7 @@ function parsePageFromLocation(loc: Location): ActivePageType {
   if (loc.pathname.startsWith('/sub-agents')) return 'subagents';
   if (loc.pathname.startsWith('/skills')) return 'skills';
   if (loc.pathname.startsWith('/slides')) return 'slides';
+  if (loc.pathname.startsWith('/mcp')) return 'mcp';
   return 'home';
 }
 
@@ -413,6 +422,17 @@ export const App: React.FC = () => {
       );
     }
 
+    if (activePage === 'mcp') {
+      return (
+        <Suspense fallback={<PageSkeleton />}>
+          <McpPage
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
+          />
+        </Suspense>
+      );
+    }
+
     return (
       <HomePage
         workspace={defaultWorkspace}
@@ -574,6 +594,17 @@ export const App: React.FC = () => {
           >
             <Presentation size={14} style={{ flexShrink: 0 }} />
             <span className="nav-label">Slides</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-link ${activePage === 'mcp' ? 'is-active' : ''}`}
+            title="MCP Servers"
+            onPointerEnter={preloadMcpPage}
+            onClick={() => navigateToPage('mcp', '/mcp')}
+          >
+            <McpIcon size={14} style={{ flexShrink: 0 }} />
+            <span className="nav-label">MCP</span>
           </button>
         </nav>
 

@@ -9,6 +9,7 @@ import {
   filterAllowedSubAgentTools,
 } from '../sub-agents/index.js';
 import { agentEvents, streamChatCompletionWithRetry } from './agent.js';
+import { isMcpToolName } from '../mcp/index.js';
 
 // Map of parentSessionId -> Set of AbortControllers for all active sub-agents in that session
 const sessionSubAgentAbortControllers = new Map<string, Set<AbortController>>();
@@ -390,7 +391,7 @@ export async function runSingleSubAgent(
           let status: 'completed' | 'error' = 'completed';
 
           try {
-            if (!allowedToolNames.includes(toolName)) {
+            if (!allowedToolNames.includes(toolName) && !isMcpToolName(toolName)) {
               throw new Error(
                 `Tool "${toolName}" is restricted or not enabled for sub-agent "${subAgentDef.name}".`
               );

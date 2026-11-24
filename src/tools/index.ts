@@ -35,6 +35,14 @@ import { manageSlidesTool } from './manage_slides/manage_slides.js';
 import { presentSlidesTool } from './present_slides/present_slides.js';
 import { organizeSlidesTool } from './organize_slides/organize_slides.js';
 import { RESTRICTED_SUB_AGENT_TOOLS } from '../sub-agents/index.js';
+import { listAvailableMcpServersTool } from './list_available_mcp_servers/list_available_mcp_servers.js';
+import { connectLocalMcpServerTool } from './connect_local_mcp_server/connect_local_mcp_server.js';
+import { connectRemoteMcpTool } from './connect_remote_mcp/connect_remote_mcp.js';
+import {
+  executeMcpTool,
+  getMcpOpenAIToolDefinitions,
+  isMcpToolName,
+} from '../mcp/index.js';
 
 export * from './types.js';
 
@@ -74,6 +82,9 @@ export const ALL_TOOLS: MythgramTool<any>[] = [
   manageSlidesTool,
   presentSlidesTool,
   organizeSlidesTool,
+  listAvailableMcpServersTool,
+  connectLocalMcpServerTool,
+  connectRemoteMcpTool,
 ];
 
 export const TOOLS_MAP = new Map<string, MythgramTool<any>>(
@@ -90,7 +101,7 @@ export const SUB_AGENT_ALLOWED_TOOLS: MythgramTool<any>[] = ALL_TOOLS.filter(
  * going with OCR/QR tools instead of aborting the task (see read_image.execute).
  */
 export function getOpenAIToolsList(_visionSupport: boolean = true) {
-  return ALL_TOOLS.map((t) => toOpenAIToolDefinition(t));
+  return [...ALL_TOOLS.map((t) => toOpenAIToolDefinition(t)), ...getMcpOpenAIToolDefinitions()];
 }
 
 /**
@@ -106,9 +117,10 @@ export function getSubAgentOpenAIToolsList(
       ? new Set(allowedToolNames.filter((n) => !RESTRICTED_SUB_AGENT_TOOLS.has(n)))
       : null;
 
-  return SUB_AGENT_ALLOWED_TOOLS.filter((t) =>
+  const native = SUB_AGENT_ALLOWED_TOOLS.filter((t) =>
     allowedSet ? allowedSet.has(t.name) : true
   ).map((t) => toOpenAIToolDefinition(t));
+  return [...native, ...getMcpOpenAIToolDefinitions({ subAgent: true })];
 }
 
 export async function executeNativeTool(
@@ -120,6 +132,11 @@ export async function executeNativeTool(
     throw new Error(
       `Tool "${toolName}" is restricted and cannot be executed by a sub-agent.`
     );
+  }
+  if (isMcpToolName(toolName)) {
+    return await executeMcpTool(toolName, rawArgs || {}, {
+      subAgent: Boolean(context.isSubAgent),
+    });
   }
   const tool = TOOLS_MAP.get(toolName);
   if (!tool) {

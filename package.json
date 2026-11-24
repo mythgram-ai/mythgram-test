@@ -12,6 +12,7 @@
   "dependencies": {
     "@hono/node-server": "^1.13.8",
     "@hono/node-ws": "^1.2.2",
+    "@modelcontextprotocol/client": "^2.4.0",
     "archiver": "^7.0.1",
     "extract-zip": "^2.0.1",
     "fast-glob": "^3.3.3",

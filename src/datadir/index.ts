@@ -15,6 +15,8 @@ export interface MythgramPaths {
   subAgentOutputsDir: string;
   skillsDir: string;
   skillsJsonPath: string;
+  mcpDir: string;
+  mcpServersJsonPath: string;
 }
 
 let cachedPaths: MythgramPaths | null = null;
@@ -33,6 +35,7 @@ export function ensureDataDirIntegrity(paths: MythgramPaths): MythgramPaths {
     paths.subAgentsDir,
     paths.subAgentOutputsDir,
     paths.skillsDir,
+    paths.mcpDir,
   ];
 
   for (const dir of dirs) {
@@ -49,6 +52,7 @@ export function ensureDataDirIntegrity(paths: MythgramPaths): MythgramPaths {
     paths.artifactsJsonPath,
     paths.subAgentsJsonPath,
     paths.skillsJsonPath,
+    paths.mcpServersJsonPath,
   ]) {
     try {
       if (!fs.existsSync(jsonPath)) {
@@ -87,6 +91,9 @@ export function initDataDir(
   const skillsDir = path.join(dataDir, 'skills');
   const skillsJsonPath = path.join(skillsDir, 'skills.json');
 
+  const mcpDir = path.join(dataDir, 'mcp');
+  const mcpServersJsonPath = path.join(mcpDir, 'mcp-servers.json');
+
   cachedPaths = {
     baseDir: resolvedBase,
     dataDir,
@@ -101,6 +108,8 @@ export function initDataDir(
     subAgentOutputsDir,
     skillsDir,
     skillsJsonPath,
+    mcpDir,
+    mcpServersJsonPath,
   };
 
   return ensureDataDirIntegrity(cachedPaths);

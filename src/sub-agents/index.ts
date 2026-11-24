@@ -29,6 +29,7 @@ export const RESTRICTED_SUB_AGENT_TOOLS = new Set<string>([
   'embed_url',
   'present_slides',
   'submit_plan',
+  'connect_remote_mcp',
 ]);
 
 export const DEFAULT_ALLOWED_SUB_AGENT_TOOLS: string[] = [
@@ -55,6 +56,8 @@ export const DEFAULT_ALLOWED_SUB_AGENT_TOOLS: string[] = [
   'list_skills',
   'manage_slides',
   'organize_slides',
+  'list_available_mcp_servers',
+  'connect_local_mcp_server',
 ];
 
 export const DEFAULT_SUB_AGENTS: SubAgentDefinition[] = [
