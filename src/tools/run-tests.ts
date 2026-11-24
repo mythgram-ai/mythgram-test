@@ -9,6 +9,7 @@ import { testReadDirectory } from './read_directory/read_directory.test.js';
 import { testGrep } from './grep/grep.test.js';
 import { testAstgrep } from './astgrep/astgrep.test.js';
 import { testGlob } from './glob/glob.test.js';
+import { testLsp } from './lsp/lsp.test.js';
 import { testStrReplace } from './str_replace/str_replace.test.js';
 import { testApplyPatch } from './apply_patch/apply_patch.test.js';
 import { testReadImage } from './read_image/read_image.test.js';
@@ -38,10 +39,10 @@ async function testNewToolsSuite() {
     visionSupport: true,
   };
 
-  // Verify total count of tools (15 original + 19 new = 34)
-  assert.equal(ALL_TOOLS.length, 34, 'Expected 34 total native tools');
+  // Verify total count of tools (15 original + 20 new = 35)
+  assert.equal(ALL_TOOLS.length, 35, 'Expected 35 total native tools');
   const openAiDefs = getOpenAIToolsList(true);
-  assert.equal(openAiDefs.length, 34);
+  assert.equal(openAiDefs.length, 35);
 
   // Verify sub-agent restricted tools are excluded
   const subAgentDefs = getSubAgentOpenAIToolsList();
@@ -52,7 +53,7 @@ async function testNewToolsSuite() {
       `Restricted tool ${def.function.name} must not appear in sub-agent tools`
     );
   }
-  assert.equal(SUB_AGENT_ALLOWED_TOOLS.length, 34 - 12);
+  assert.equal(SUB_AGENT_ALLOWED_TOOLS.length, 35 - 12);
 
   // 1. wait
   const waitRes = await executeNativeTool('wait', { seconds: 1 }, ctx);
@@ -291,6 +292,7 @@ async function runAll() {
   await testGrep();
   await testAstgrep();
   await testGlob();
+  await testLsp();
   await testStrReplace();
   await testApplyPatch();
   await testReadImage();
@@ -300,7 +302,7 @@ async function runAll() {
   await testExtractArchive();
   await testShallTool();
   await testNewToolsSuite();
-  console.log('All 34 Mythgram Native Tools Passed Tests!');
+  console.log('All 35 Mythgram Native Tools Passed Tests!');
 }
 
 runAll().catch((err) => {

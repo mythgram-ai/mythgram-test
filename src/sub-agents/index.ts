@@ -39,6 +39,7 @@ export const DEFAULT_ALLOWED_SUB_AGENT_TOOLS: string[] = [
   'grep',
   'astgrep',
   'glob',
+  'lsp',
   'str_replace',
   'apply_patch',
   'read_image',

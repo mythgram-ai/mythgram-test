@@ -1,15 +1,15 @@
 # Mythgram — Autonomous General-Purpose AI Agent
 
-Mythgram is an autonomous, general-purpose AI software engineering and operations agent that runs directly on your local computer with 34 native function-calling tools, multi-session background execution, sub-agent orchestration, artifacts & skills management, interactive slide decks, high-throughput SQLite + RAM buffered streaming, and a responsive developer workspace UI.
+Mythgram is an autonomous, general-purpose AI software engineering and operations agent that runs directly on your local computer with 35 native function-calling tools, multi-session background execution, sub-agent orchestration, artifacts & skills management, interactive slide decks, high-throughput SQLite + RAM buffered streaming, and a responsive developer workspace UI.
 
 ## Live Service URLs
 - **Frontend WebUI (Port 2000)**: `https://2000-izglh5qn65qt0ga0q9pgl-d0b9e1e2.sandbox.novita.ai` (or `http://localhost:2000`)
 - **Backend API & SSE/WS Server (Port 1000)**: `https://1000-izglh5qn65qt0ga0q9pgl-d0b9e1e2.sandbox.novita.ai` (or `http://localhost:1000`)
 
 ## Completed Features & Systems
-1. **34 Native Function-Calling Tools (Zod Schemas)**:
+1. **35 Native Function-Calling Tools (Zod Schemas)**:
    - Core Workspace Tools (15): `file_write`, `file_read`, `file_list`, `read_directory`, `grep`, `astgrep`, `glob`, `str_replace`, `apply_patch`, `read_image`, `scan_qr_code`, `fetch_text_from_image`, `archive_files`, `extract_archive`, `shall_tool`.
-   - New Extended Tools (19): `wait`, `save_artifacts`, `list_artifacts`, `show_artifact_to_user`, `attach_files`, `ask_for_something`, `ask_question_to_user`, `embed_url`, `read_todos`, `todo_write`, `submit_plan`, `create_sub_agent`, `call_sub_agent`, `list_sub_agents`, `create_skill`, `list_skills`, `manage_slides`, `present_slides`, `organize_slides`.
+   - New Extended Tools (20): `wait`, `save_artifacts`, `list_artifacts`, `show_artifact_to_user`, `attach_files`, `ask_for_something`, `ask_question_to_user`, `embed_url`, `read_todos`, `todo_write`, `submit_plan`, `create_sub_agent`, `call_sub_agent`, `list_sub_agents`, `create_skill`, `list_skills`, `manage_slides`, `present_slides`, `organize_slides`, `lsp`.
 2. **Artifacts System (`src/artifacts`, `.mythgram/artifacts/artifacts.json`)**:
    - Saves reusable artifacts on disk inside `.mythgram/artifacts` with automatic recreation if deleted.
    - Dedicated lazy-loaded **Artifacts Page** (`/artifacts`) and **Artifact Tab** inside Chat Page (showing rendered content).
@@ -23,6 +23,12 @@ Mythgram is an autonomous, general-purpose AI software engineering and operation
 5. **Slides System (`slide_projects` in SQLite)**:
    - Organizes, manages, and presents 16:9 HTML slide decks with export/download support for **PNG, JPEG, SVG, PDF, PPTX, and HTML**; each deck downloads as a single ZIP archive in the selected format.
    - Dedicated lazy-loaded **Slides Page** (`/slides`) and **Slides Tab** in Chat Page.
+
+6. **LSP Code Intelligence (`src/lsp`, `lsp` tool)**:
+   - Native JSON-RPC 2.0 Language Server Protocol engine over stdio with `Content-Length` framing, per-project server lifecycle, document synchronization, request cancellation, and idle shutdown.
+   - Supports `goToDefinition`, `findReferences`, `hover`, `documentSymbol`, `workspaceSymbol`, `goToImplementation`, `prepareCallHierarchy`, `incomingCalls`, and `outgoingCalls`.
+   - Ships a built-in registry for TypeScript, Python, Go, Rust, C/C++, Ruby, Lua, PHP, shell, YAML, JSON, HTML, CSS, Kotlin, Swift, Zig, and C# servers. Add or override servers in `.mythgram/lsp.json` or via `MYTHGRAM_LSP_SERVERS`.
+   - `lsp` is available to the main agent and to sub-agents.
 
 ## Architecture & Directory Structure
 
@@ -47,8 +53,9 @@ Mythgram is an autonomous, general-purpose AI software engineering and operation
 │   │   ├── agent.ts               # Main autonomous ReAct loop & resilient streaming engine
 │   │   ├── sub-agent.ts           # Sub-agent execution engine with live streaming & abort cascade
 │   │   └── prompt/
-│   │       └── system-prompt.md   # System prompt with instructions for all 34 tools & systems
-│   └── tools/                     # 34 Zod-schema native function-calling tools + unit tests
+│   │       └── system-prompt.md   # System prompt with instructions for all 35 tools & systems
+│   ├── lsp/                       # Language Server Protocol engine (JSON-RPC, clients, server registry)
+│   └── tools/                     # 35 Zod-schema native function-calling tools + unit tests
 └── webui/                         # React 19 + Vite 6 + TypeScript Frontend (Port 2000)
     └── src/
         ├── pages/                 # Lazy-loaded pages (HomePage, ChatPage, ArtifactsPage, SubAgentsPage, SkillsPage, SlidesPage)

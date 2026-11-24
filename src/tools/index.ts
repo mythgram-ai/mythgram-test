@@ -6,6 +6,7 @@ import { readDirectoryTool } from './read_directory/read_directory.js';
 import { grepTool } from './grep/grep.js';
 import { astgrepTool } from './astgrep/astgrep.js';
 import { globTool } from './glob/glob.js';
+import { lspTool } from './lsp/lsp.js';
 import { strReplaceTool } from './str_replace/str_replace.js';
 import { applyPatchTool } from './apply_patch/apply_patch.js';
 import { readImageTool } from './read_image/read_image.js';
@@ -45,6 +46,7 @@ export const ALL_TOOLS: MythgramTool<any>[] = [
   grepTool,
   astgrepTool,
   globTool,
+  lspTool,
   strReplaceTool,
   applyPatchTool,
   readImageTool,
