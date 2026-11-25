@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Loader2,
 } from 'lucide-react';
+import { ZapierNotice } from '../components/ZapierNotice';
 
 interface Connector {
   slug: string;
@@ -235,6 +236,8 @@ export const ConnectorsPage: React.FC<ConnectorsPageProps> = ({
           </button>
         </div>
       </header>
+
+      <ZapierNotice />
 
       {!settings.configured ? (
         <div className="connectors-empty-state">

@@ -40,6 +40,12 @@ import { connectLocalMcpServerTool } from './connect_local_mcp_server/connect_lo
 import { connectRemoteMcpTool } from './connect_remote_mcp/connect_remote_mcp.js';
 import { listAvailableApplicationConnectorsTool } from './list_available_application_connectors/list_available_application_connectors.js';
 import { connectApplicationsConnectorsTool } from './connect_applications_connectors/connect_applications_connectors.js';
+import { memorySearchTool } from './memory_search/memory_search.js';
+import { knowledgeSearchTool } from './knowledge_search/knowledge_search.js';
+import { githubRepositorySearchTool } from './github_repository_search/github_repository_search.js';
+import { webSearchTool } from './web_search/web_search.js';
+import { imageSearchTool } from './image_search/image_search.js';
+import { fatchWebUrlsTool } from './fatch_web_urls/fatch_web_urls.js';
 import {
   executeMcpTool,
   getMcpOpenAIToolDefinitions,
@@ -94,6 +100,12 @@ export const ALL_TOOLS: MythgramTool<any>[] = [
   connectRemoteMcpTool,
   listAvailableApplicationConnectorsTool,
   connectApplicationsConnectorsTool,
+  memorySearchTool,
+  knowledgeSearchTool,
+  githubRepositorySearchTool,
+  webSearchTool,
+  imageSearchTool,
+  fatchWebUrlsTool,
 ];
 
 export const TOOLS_MAP = new Map<string, MythgramTool<any>>(

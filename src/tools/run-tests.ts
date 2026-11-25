@@ -18,6 +18,14 @@ import { testFetchTextFromImage } from './fetch_text_from_image/fetch_text_from_
 import { testArchiveFiles } from './archive_files/archive_files.test.js';
 import { testExtractArchive } from './extract_archive/extract_archive.test.js';
 import { testShallTool } from './shall_tool/shall_tool.test.js';
+import { testMemorySearchTool } from './memory_search/memory_search.test.js';
+import { testKnowledgeSearchTool } from './knowledge_search/knowledge_search.test.js';
+import { testFatchWebUrlsTool } from './fatch_web_urls/fatch_web_urls.test.js';
+import { testGithubRepositorySearchTool } from './github_repository_search/github_repository_search.test.js';
+import { testMemorySystem } from '../memory/memory.test.js';
+import { testKnowledgeSystem } from '../knowledge/knowledge.test.js';
+import { testScraperSystem } from '../scraper/scraper.test.js';
+import { testWebSearchSystem } from '../web-search/web-search.test.js';
 import {
   ALL_TOOLS,
   SUB_AGENT_ALLOWED_TOOLS,
@@ -39,10 +47,10 @@ async function testNewToolsSuite() {
     visionSupport: true,
   };
 
-  // Verify total count of tools (15 original + 20 new = 35)
-  assert.equal(ALL_TOOLS.length, 35, 'Expected 35 total native tools');
+  // Verify total count of tools (40 previous + 6 search/memory tools = 46)
+  assert.equal(ALL_TOOLS.length, 46, 'Expected 46 total native tools');
   const openAiDefs = getOpenAIToolsList(true);
-  assert.equal(openAiDefs.length, 35);
+  assert.equal(openAiDefs.length, 46);
 
   // Verify sub-agent restricted tools are excluded
   const subAgentDefs = getSubAgentOpenAIToolsList();
@@ -53,7 +61,7 @@ async function testNewToolsSuite() {
       `Restricted tool ${def.function.name} must not appear in sub-agent tools`
     );
   }
-  assert.equal(SUB_AGENT_ALLOWED_TOOLS.length, 35 - 12);
+  assert.equal(SUB_AGENT_ALLOWED_TOOLS.length, ALL_TOOLS.length - RESTRICTED_SUB_AGENT_TOOLS.size);
 
   // 1. wait
   const waitRes = await executeNativeTool('wait', { seconds: 1 }, ctx);
@@ -302,7 +310,15 @@ async function runAll() {
   await testExtractArchive();
   await testShallTool();
   await testNewToolsSuite();
-  console.log('All 35 Mythgram Native Tools Passed Tests!');
+  await testMemorySystem();
+  await testKnowledgeSystem();
+  await testScraperSystem();
+  await testWebSearchSystem();
+  await testMemorySearchTool();
+  await testKnowledgeSearchTool();
+  await testFatchWebUrlsTool();
+  await testGithubRepositorySearchTool();
+  console.log('All 46 Mythgram Native Tools Passed Tests!');
 }
 
 runAll().catch((err) => {

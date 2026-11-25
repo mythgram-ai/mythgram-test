@@ -17,6 +17,12 @@ export interface MythgramPaths {
   skillsJsonPath: string;
   mcpDir: string;
   mcpServersJsonPath: string;
+  memoryDir: string;
+  memoryJsonPath: string;
+  knowledgeDir: string;
+  knowledgeJsonPath: string;
+  webSearchDir: string;
+  webSearchJsonPath: string;
 }
 
 let cachedPaths: MythgramPaths | null = null;
@@ -36,6 +42,9 @@ export function ensureDataDirIntegrity(paths: MythgramPaths): MythgramPaths {
     paths.subAgentOutputsDir,
     paths.skillsDir,
     paths.mcpDir,
+    paths.memoryDir,
+    paths.knowledgeDir,
+    paths.webSearchDir,
   ];
 
   for (const dir of dirs) {
@@ -53,6 +62,8 @@ export function ensureDataDirIntegrity(paths: MythgramPaths): MythgramPaths {
     paths.subAgentsJsonPath,
     paths.skillsJsonPath,
     paths.mcpServersJsonPath,
+    paths.memoryJsonPath,
+    paths.knowledgeJsonPath,
   ]) {
     try {
       if (!fs.existsSync(jsonPath)) {
@@ -94,6 +105,15 @@ export function initDataDir(
   const mcpDir = path.join(dataDir, 'mcp');
   const mcpServersJsonPath = path.join(mcpDir, 'mcp-servers.json');
 
+  const memoryDir = path.join(dataDir, 'memory');
+  const memoryJsonPath = path.join(memoryDir, 'memory-entry.json');
+
+  const knowledgeDir = path.join(dataDir, 'knowledge');
+  const knowledgeJsonPath = path.join(knowledgeDir, 'knowledge-entry.json');
+
+  const webSearchDir = path.join(dataDir, 'web-search');
+  const webSearchJsonPath = path.join(webSearchDir, 'web-search.json');
+
   cachedPaths = {
     baseDir: resolvedBase,
     dataDir,
@@ -110,6 +130,12 @@ export function initDataDir(
     skillsJsonPath,
     mcpDir,
     mcpServersJsonPath,
+    memoryDir,
+    memoryJsonPath,
+    knowledgeDir,
+    knowledgeJsonPath,
+    webSearchDir,
+    webSearchJsonPath,
   };
 
   return ensureDataDirIntegrity(cachedPaths);

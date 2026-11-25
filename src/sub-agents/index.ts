@@ -60,6 +60,12 @@ export const DEFAULT_ALLOWED_SUB_AGENT_TOOLS: string[] = [
   'organize_slides',
   'list_available_mcp_servers',
   'connect_local_mcp_server',
+  'memory_search',
+  'knowledge_search',
+  'github_repository_search',
+  'web_search',
+  'image_search',
+  'fatch_web_urls',
 ];
 
 export const DEFAULT_SUB_AGENTS: SubAgentDefinition[] = [

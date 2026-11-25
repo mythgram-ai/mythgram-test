@@ -6,6 +6,7 @@ import { getProviderRuntimeCredentials } from '../providers/index.js';
 import { getOpenAIToolsList, executeNativeTool } from '../tools/index.js';
 import { abortSubAgentsForSession } from './sub-agent.js';
 import { cancelPendingInteractionsForSession } from '../tools/interactive-store.js';
+import { buildMemoryContext, isFirstUserRequest } from '../memory/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -96,14 +97,19 @@ export function abortSessionRun(sessionId: string): boolean {
   return false;
 }
 
-async function loadSystemPrompt(workspaceRoot: string): Promise<string> {
+async function loadSystemPrompt(
+  workspaceRoot: string,
+  memoryContext: string = ''
+): Promise<string> {
   const promptPath = path.join(__dirname, 'prompt', 'system-prompt.md');
+  let base: string;
   try {
     const raw = await fs.readFile(promptPath, 'utf-8');
-    return raw.replace(/\$\{workspaceRoot\}/g, workspaceRoot);
+    base = raw.replace(/\$\{workspaceRoot\}/g, workspaceRoot);
   } catch {
-    return `You are Mythgram, an autonomous AI agent. Active workspace: ${workspaceRoot}`;
+    base = `You are Mythgram, an autonomous AI agent. Active workspace: ${workspaceRoot}`;
   }
+  return memoryContext ? `${base}\n\n${memoryContext}` : base;
 }
 
 function estimateTokens(text: string): number {
@@ -171,6 +177,17 @@ export async function runAgentLoop(sessionId: string): Promise<void> {
   let visionSupported: boolean | null = null;
   let visionFailureNotice = false;
 
+  // Memory is injected only on the first user request of a session, then kept for the
+  // whole run so every ReAct iteration sees the same context.
+  let memoryContext = '';
+  try {
+    if (isFirstUserRequest(db.getSessionMessages(sessionId))) {
+      memoryContext = await buildMemoryContext();
+    }
+  } catch {
+    memoryContext = '';
+  }
+
   try {
     // Unlimited ReAct loop: Thought -> Action -> Observation -> Repeat
     while (!abortController.signal.aborted) {
@@ -180,7 +197,7 @@ export async function runAgentLoop(sessionId: string): Promise<void> {
       const providerCreds = getProviderRuntimeCredentials(currentSession.provider_id);
       if (visionSupported === null) visionSupported = providerCreds.visionSupport;
       const reasoningEffort = db.getSetting('reasoning_effort', 'default');
-      const systemPrompt = await loadSystemPrompt(currentSession.workspace);
+      const systemPrompt = await loadSystemPrompt(currentSession.workspace, memoryContext);
       const historyRows = db.getSessionMessages(sessionId);
 
       // Build OpenAI-compatible messages array

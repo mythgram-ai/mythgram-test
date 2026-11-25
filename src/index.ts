@@ -52,6 +52,32 @@ import {
   ensureSkillsStore,
 } from './skills/index.js';
 import {
+  listMemoryEntries,
+  getMemoryEntry,
+  createMemoryEntry,
+  updateMemoryEntry,
+  deleteMemoryEntry,
+  restoreDefaultMemoryFiles,
+  ensureMemoryStore,
+} from './memory/index.js';
+import {
+  listKnowledgeEntries,
+  getKnowledgeEntry,
+  createKnowledgeFromText,
+  createKnowledgeFromPath,
+  createKnowledgeFromDocs,
+  createKnowledgeFromCurl,
+  updateKnowledgeEntry,
+  deleteKnowledgeEntry,
+  ensureKnowledgeStore,
+} from './knowledge/index.js';
+import {
+  getMaskedWebSearchSettings,
+  updateWebSearchSettings,
+  webSearch,
+  imageSearch,
+} from './web-search/index.js';
+import {
   resolveUserInteraction,
   getPendingInteractionsForSession,
 } from './tools/interactive-store.js';
@@ -81,6 +107,8 @@ initDataDir();
 void ensureArtifactsStore();
 void ensureSubAgentsStore();
 void ensureSkillsStore();
+void ensureMemoryStore();
+void ensureKnowledgeStore();
 void ensureMcpStore();
 void initializeMcp();
 void refreshConnectorToolCache();
@@ -713,6 +741,184 @@ app.delete('/api/skills/:name', async (c) => {
   const deleted = await deleteSkill(name);
   const skills = await listSkills();
   return c.json({ ok: deleted, skills });
+});
+
+// ==================== MEMORY (.mythgram/memory) ====================
+app.get('/api/memory', async (c) => {
+  const entries = await listMemoryEntries();
+  return c.json({ ok: true, memory_dir: getDataDir().memoryDir, entries });
+});
+
+app.get('/api/memory/:id', async (c) => {
+  const detail = await getMemoryEntry(c.req.param('id'));
+  if (!detail) return c.json({ ok: false, error: 'Memory file not found' }, 404);
+  return c.json({ ok: true, ...detail });
+});
+
+app.post('/api/memory', async (c) => {
+  try {
+    const body = await c.req.json();
+    const entry = await createMemoryEntry({
+      name: String(body.name || ''),
+      description: body.description ? String(body.description) : '',
+      content: body.content ? String(body.content) : undefined,
+      send_on_request: body.send_on_request !== false,
+      file: body.file ? String(body.file) : undefined,
+    });
+    return c.json({ ok: true, entry, entries: await listMemoryEntries() });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to create memory file' }, 400);
+  }
+});
+
+app.put('/api/memory/:id', async (c) => {
+  try {
+    const body = await c.req.json();
+    const entry = await updateMemoryEntry(c.req.param('id'), {
+      name: body.name !== undefined ? String(body.name) : undefined,
+      description: body.description !== undefined ? String(body.description) : undefined,
+      send_on_request:
+        body.send_on_request !== undefined ? Boolean(body.send_on_request) : undefined,
+      content: body.content !== undefined ? String(body.content) : undefined,
+    });
+    if (!entry) return c.json({ ok: false, error: 'Memory file not found' }, 404);
+    return c.json({ ok: true, entry, entries: await listMemoryEntries() });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to update memory file' }, 400);
+  }
+});
+
+app.delete('/api/memory/:id', async (c) => {
+  try {
+    const deleted = await deleteMemoryEntry(c.req.param('id'));
+    return c.json({ ok: deleted, entries: await listMemoryEntries() });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to delete memory file' }, 400);
+  }
+});
+
+app.post('/api/memory/restore', async (c) => {
+  const entries = await restoreDefaultMemoryFiles();
+  return c.json({ ok: true, entries });
+});
+
+// ==================== KNOWLEDGE (.mythgram/knowledge) ====================
+app.get('/api/knowledge', async (c) => {
+  const entries = await listKnowledgeEntries();
+  return c.json({ ok: true, knowledge_dir: getDataDir().knowledgeDir, entries });
+});
+
+app.get('/api/knowledge/:id', async (c) => {
+  const detail = await getKnowledgeEntry(c.req.param('id'));
+  if (!detail) return c.json({ ok: false, error: 'Knowledge file not found' }, 404);
+  return c.json({ ok: true, ...detail });
+});
+
+app.post('/api/knowledge', async (c) => {
+  try {
+    const body = await c.req.json();
+    const type = String(body.type || 'text');
+    const description = body.description ? String(body.description) : '';
+
+    if (type === 'docs') {
+      const entry = await createKnowledgeFromDocs({
+        url: String(body.url || ''),
+        name: body.name ? String(body.name) : undefined,
+        description,
+      });
+      return c.json({ ok: true, created: [entry], entries: await listKnowledgeEntries() });
+    }
+
+    if (type === 'curl') {
+      const entry = await createKnowledgeFromCurl({
+        curlCommand: String(body.curlCommand || ''),
+        name: body.name ? String(body.name) : undefined,
+        description,
+      });
+      return c.json({ ok: true, created: [entry], entries: await listKnowledgeEntries() });
+    }
+
+    if (type === 'upload') {
+      const rawPaths = Array.isArray(body.paths) ? body.paths : body.path ? [body.path] : [];
+      const paths = rawPaths.map((p: unknown) => String(p)).filter(Boolean);
+      if (paths.length === 0) {
+        return c.json({ ok: false, error: 'No uploaded file or folder path provided.' }, 400);
+      }
+      const created = [];
+      for (const targetPath of paths) {
+        const entries = await createKnowledgeFromPath({ targetPath, description });
+        created.push(...entries);
+      }
+      return c.json({ ok: true, created, entries: await listKnowledgeEntries() });
+    }
+
+    const entry = await createKnowledgeFromText({
+      name: String(body.name || ''),
+      description,
+      content: String(body.content || ''),
+    });
+    return c.json({ ok: true, created: [entry], entries: await listKnowledgeEntries() });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to create knowledge file' }, 400);
+  }
+});
+
+app.put('/api/knowledge/:id', async (c) => {
+  try {
+    const body = await c.req.json();
+    const entry = await updateKnowledgeEntry(c.req.param('id'), {
+      name: body.name !== undefined ? String(body.name) : undefined,
+      description: body.description !== undefined ? String(body.description) : undefined,
+      content: body.content !== undefined ? String(body.content) : undefined,
+    });
+    if (!entry) return c.json({ ok: false, error: 'Knowledge file not found' }, 404);
+    return c.json({ ok: true, entry, entries: await listKnowledgeEntries() });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to update knowledge file' }, 400);
+  }
+});
+
+app.delete('/api/knowledge/:id', async (c) => {
+  const deleted = await deleteKnowledgeEntry(c.req.param('id'));
+  return c.json({ ok: deleted, entries: await listKnowledgeEntries() });
+});
+
+// ==================== WEB SEARCH & SCRAPER SETTINGS ====================
+app.get('/api/web-search/settings', async (c) => {
+  const settings = await getMaskedWebSearchSettings();
+  return c.json({ ok: true, ...settings });
+});
+
+app.post('/api/web-search/settings', async (c) => {
+  try {
+    const body = await c.req.json();
+    await updateWebSearchSettings({
+      provider: body.provider,
+      scraper_provider: body.scraper_provider,
+      api_keys: body.api_keys,
+      firecrawl_api_key: body.firecrawl_api_key,
+    });
+    const settings = await getMaskedWebSearchSettings();
+    return c.json({ ok: true, ...settings });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to save web search settings' }, 400);
+  }
+});
+
+app.post('/api/web-search/test', async (c) => {
+  try {
+    const body = await c.req.json().catch(() => ({}));
+    const query = String(body.query || 'mythgram ai agent').trim();
+    const kind = String(body.kind || 'web');
+    if (kind === 'image') {
+      const result = await imageSearch(query, { maxResults: 4, timeoutMs: 60_000 });
+      return c.json({ ok: true, kind, ...result });
+    }
+    const result = await webSearch(query, { maxResults: 4, timeoutMs: 60_000 });
+    return c.json({ ok: true, kind: 'web', ...result });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Search test failed' }, 400);
+  }
 });
 
 // ==================== SLIDES (SQLite) ====================

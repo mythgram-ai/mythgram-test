@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, lazy, Suspense } from 'react';
 import {
   X,
   Cpu,
@@ -10,6 +10,7 @@ import {
   Eye,
   Sliders,
   Plug,
+  Globe,
 } from 'lucide-react';
 
 export interface ModelMetadata {
@@ -49,6 +50,10 @@ interface SettingsModalProps {
   onRefreshSettings: () => Promise<void>;
 }
 
+const WebSearchSettings = lazy(() =>
+  import('./settings/WebSearchSettings').then((m) => ({ default: m.WebSearchSettings }))
+);
+
 const PRESET_EFFORTS = ['default', 'low', 'medium', 'high', 'max'];
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -68,7 +73,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [fetchingModels, setFetchingModels] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  const [activeSection, setActiveSection] = useState<'models' | 'connectors'>('models');
+  const [activeSection, setActiveSection] = useState<
+    'models' | 'connectors' | 'websearch'
+  >('models');
   const [connectorSettings, setConnectorSettings] = useState<{
     configured: boolean;
     api_key_masked: string;
@@ -344,6 +351,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <Plug size={14} />
             <span>Connectors</span>
           </button>
+          <button
+            type="button"
+            className={`nav-link ${activeSection === 'websearch' ? 'is-active' : ''}`}
+            onClick={() => setActiveSection('websearch')}
+          >
+            <Globe size={14} />
+            <span>Web Search</span>
+          </button>
         </div>
 
         {/* Settings Main Panel */}
@@ -353,6 +368,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <span>
                 {activeSection === 'connectors'
                   ? 'Application Connectors'
+                  : activeSection === 'websearch'
+                  ? 'Web Search & Scraping'
                   : 'LLM Models & Providers'}
               </span>
               <span className="topbar-badge">
@@ -360,6 +377,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   ? connectorSettings.configured
                     ? `Composio key ${connectorSettings.api_key_masked}`
                     : 'Composio not configured'
+                  : activeSection === 'websearch'
+                  ? 'DuckDuckGo, Tavily, Exa, SerpAPI'
                   : `Active: ${activeProvider} / ${activeModel}`}
               </span>
             </div>
@@ -489,6 +508,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                 {connectorStatus && <div className="connectors-settings-status">{connectorStatus}</div>}
               </div>
+            ) : activeSection === 'websearch' ? (
+              <Suspense
+                fallback={
+                  <div className="settings-pane-loading">
+                    <div className="spinner" />
+                    <span>Loading web search settings…</span>
+                  </div>
+                }
+              >
+                <WebSearchSettings />
+              </Suspense>
             ) : (
               <div className="settings-models-pane">
             {/* Reasoning Effort Bar */}

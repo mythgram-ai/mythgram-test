@@ -15,6 +15,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { McpIcon } from '../components/McpIcon';
+import { ZapierNotice } from '../components/ZapierNotice';
 
 interface McpTool {
   name: string;
@@ -270,6 +271,8 @@ export const McpPage: React.FC<McpPageProps> = ({ onOpenSettings, onOpenSidebar 
           </button>
         </div>
       </header>
+
+      <ZapierNotice />
 
       <div className="mcp-layout">
         <div className="mcp-list">

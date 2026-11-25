@@ -15,6 +15,8 @@ import {
   BookOpen,
   Presentation,
   Plug,
+  Brain,
+  Database,
 } from 'lucide-react';
 import { HomePage } from './pages/HomePage';
 import type { ProviderState } from './components/SettingsModal';
@@ -35,6 +37,12 @@ const SkillsPage = lazy(() =>
 );
 const SlidesPage = lazy(() =>
   import('./pages/SlidesPage').then((m) => ({ default: m.SlidesPage }))
+);
+const MemoryPage = lazy(() =>
+  import('./pages/MemoryPage').then((m) => ({ default: m.MemoryPage }))
+);
+const KnowledgePage = lazy(() =>
+  import('./pages/KnowledgePage').then((m) => ({ default: m.KnowledgePage }))
 );
 const McpPage = lazy(() =>
   import('./pages/McpPage').then((m) => ({ default: m.McpPage }))
@@ -64,6 +72,12 @@ const preloadSkillsPage = () => {
 const preloadSlidesPage = () => {
   void import('./pages/SlidesPage');
 };
+const preloadMemoryPage = () => {
+  void import('./pages/MemoryPage');
+};
+const preloadKnowledgePage = () => {
+  void import('./pages/KnowledgePage');
+};
 const preloadMcpPage = () => {
   void import('./pages/McpPage');
 };
@@ -77,6 +91,8 @@ type ActivePageType =
   | 'artifacts'
   | 'subagents'
   | 'skills'
+  | 'memory'
+  | 'knowledge'
   | 'slides'
   | 'mcp'
   | 'connectors';
@@ -108,6 +124,8 @@ function parsePageFromLocation(loc: Location): ActivePageType {
   if (loc.pathname.startsWith('/artifacts')) return 'artifacts';
   if (loc.pathname.startsWith('/sub-agents')) return 'subagents';
   if (loc.pathname.startsWith('/skills')) return 'skills';
+  if (loc.pathname.startsWith('/memory')) return 'memory';
+  if (loc.pathname.startsWith('/knowledge')) return 'knowledge';
   if (loc.pathname.startsWith('/slides')) return 'slides';
   if (loc.pathname.startsWith('/mcp')) return 'mcp';
   if (loc.pathname.startsWith('/connectors')) return 'connectors';
@@ -420,6 +438,28 @@ export const App: React.FC = () => {
       );
     }
 
+    if (activePage === 'memory') {
+      return (
+        <Suspense fallback={<PageSkeleton />}>
+          <MemoryPage
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
+          />
+        </Suspense>
+      );
+    }
+
+    if (activePage === 'knowledge') {
+      return (
+        <Suspense fallback={<PageSkeleton />}>
+          <KnowledgePage
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
+          />
+        </Suspense>
+      );
+    }
+
     if (activePage === 'slides') {
       return (
         <Suspense fallback={<PageSkeleton />}>
@@ -603,6 +643,28 @@ export const App: React.FC = () => {
           >
             <BookOpen size={14} style={{ flexShrink: 0 }} />
             <span className="nav-label">Skills</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-link ${activePage === 'memory' ? 'is-active' : ''}`}
+            title="Memory"
+            onPointerEnter={preloadMemoryPage}
+            onClick={() => navigateToPage('memory', '/memory')}
+          >
+            <Brain size={14} style={{ flexShrink: 0 }} />
+            <span className="nav-label">Memory</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-link ${activePage === 'knowledge' ? 'is-active' : ''}`}
+            title="Knowledge"
+            onPointerEnter={preloadKnowledgePage}
+            onClick={() => navigateToPage('knowledge', '/knowledge')}
+          >
+            <Database size={14} style={{ flexShrink: 0 }} />
+            <span className="nav-label">Knowledge</span>
           </button>
 
           <button
