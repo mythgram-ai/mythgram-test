@@ -9,6 +9,7 @@ import {
   Trash2,
   Eye,
   Sliders,
+  Plug,
 } from 'lucide-react';
 
 export interface ModelMetadata {
@@ -66,6 +67,59 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [modelSearch, setModelSearch] = useState('');
   const [fetchingModels, setFetchingModels] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  const [activeSection, setActiveSection] = useState<'models' | 'connectors'>('models');
+  const [connectorSettings, setConnectorSettings] = useState<{
+    configured: boolean;
+    api_key_masked: string;
+    enabled: boolean;
+    allow_sub_agents: boolean;
+  }>({
+    configured: false,
+    api_key_masked: '',
+    enabled: true,
+    allow_sub_agents: false,
+  });
+  const [connectorApiKey, setConnectorApiKey] = useState('');
+  const [connectorStatus, setConnectorStatus] = useState<string | null>(null);
+  const [savingConnectors, setSavingConnectors] = useState(false);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    fetch('/api/connectors/settings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.settings) setConnectorSettings(data.settings);
+      })
+      .catch(() => undefined);
+  }, [isOpen]);
+
+  const saveConnectorSettings = async (patch: Record<string, any>) => {
+    setSavingConnectors(true);
+    try {
+      const res = await fetch('/api/connectors/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      const data = await res.json();
+      if (data?.settings) setConnectorSettings(data.settings);
+      if (data.ok) {
+        window.dispatchEvent(
+          new CustomEvent('mythgram:connector-settings-updated', {
+            detail: { settings: data.settings, apiKeyChanged: Boolean(patch.api_key) },
+          })
+        );
+      }
+      setConnectorStatus(data.ok ? 'Saved.' : data.error || 'Failed to save.');
+      if (data.ok && patch.api_key) setConnectorApiKey('');
+      setTimeout(() => setConnectorStatus(null), 4000);
+    } catch (err: any) {
+      setConnectorStatus(err?.message || 'Failed to save.');
+    } finally {
+      setSavingConnectors(false);
+    }
+  };
 
   // Form states for the currently viewed provider
   const currentProvider = useMemo(
@@ -274,9 +328,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Settings Popup Left Sidebar: Only one button = Models */}
         <div className="settings-sidebar">
           <div className="settings-sidebar-label">Settings</div>
-          <button type="button" className="nav-link is-active">
+          <button
+            type="button"
+            className={`nav-link ${activeSection === 'models' ? 'is-active' : ''}`}
+            onClick={() => setActiveSection('models')}
+          >
             <Cpu size={14} />
             <span>Models</span>
+          </button>
+          <button
+            type="button"
+            className={`nav-link ${activeSection === 'connectors' ? 'is-active' : ''}`}
+            onClick={() => setActiveSection('connectors')}
+          >
+            <Plug size={14} />
+            <span>Connectors</span>
           </button>
         </div>
 
@@ -284,20 +350,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="settings-content">
           <div className="settings-header">
             <div className="settings-header-title">
-              <span>LLM Models & Providers</span>
+              <span>
+                {activeSection === 'connectors'
+                  ? 'Application Connectors'
+                  : 'LLM Models & Providers'}
+              </span>
               <span className="topbar-badge">
-                Active: {activeProvider} / {activeModel}
+                {activeSection === 'connectors'
+                  ? connectorSettings.configured
+                    ? `Composio key ${connectorSettings.api_key_masked}`
+                    : 'Composio not configured'
+                  : `Active: ${activeProvider} / ${activeModel}`}
               </span>
             </div>
             <div className="settings-header-actions">
-              <button
-                type="button"
-                className="btn-secondary inline-center"
-                onClick={() => setShowAddCustom(!showAddCustom)}
-              >
-                <Plus size={13} />
-                Add Custom Provider
-              </button>
+              {activeSection === 'models' && (
+                <button
+                  type="button"
+                  className="btn-secondary inline-center"
+                  onClick={() => setShowAddCustom(!showAddCustom)}
+                >
+                  <Plus size={13} />
+                  Add Custom Provider
+                </button>
+              )}
               <button type="button" className="icon-btn" onClick={onClose}>
                 <X size={16} />
               </button>
@@ -305,6 +381,116 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           <div className="settings-body">
+            {activeSection === 'connectors' ? (
+              <div className="connectors-settings-pane">
+                <div className="connectors-settings-card">
+                  <div className="connectors-settings-head">
+                    <Plug size={16} />
+                    <div>
+                      <h3>Composio API key</h3>
+                      <p>
+                        Create a key at composio.dev and paste it here. It unlocks 450+
+                        OAuth connectors that the agent can use on your behalf.
+                      </p>
+                    </div>
+                  </div>
+                  {connectorSettings.configured && (
+                    <div className="connectors-settings-current">
+                      <Check size={13} />
+                      <span>Key saved: {connectorSettings.api_key_masked}</span>
+                    </div>
+                  )}
+                  <div className="connectors-key-row">
+                    <input
+                      className="input-field"
+                      type="password"
+                      placeholder={
+                        connectorSettings.configured
+                          ? 'Enter a new key to replace the saved one'
+                          : 'Paste your Composio API key'
+                      }
+                      value={connectorApiKey}
+                      onChange={(e) => setConnectorApiKey(e.target.value)}
+                      spellCheck={false}
+                    />
+                    <button
+                      type="button"
+                      className="btn-primary inline-center"
+                      disabled={savingConnectors || !connectorApiKey.trim()}
+                      onClick={() => saveConnectorSettings({ api_key: connectorApiKey.trim() })}
+                    >
+                      Save key
+                    </button>
+                  </div>
+                  <a
+                    className="connectors-settings-link"
+                    href="https://app.composio.dev/settings"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open Composio dashboard →
+                  </a>
+                </div>
+
+                <div className="connectors-settings-card">
+                  <h3>Agent access</h3>
+                  <label className="mcp-toggle-row">
+                    <span>
+                      <span className="mcp-toggle-label">Enable connectors</span>
+                      <span className="mcp-toggle-hint">
+                        Turn off to hide every connected tool from the agent.
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={connectorSettings.enabled}
+                      className={`mcp-switch ${connectorSettings.enabled ? 'is-on' : ''}`}
+                      onClick={() =>
+                        saveConnectorSettings({ enabled: !connectorSettings.enabled })
+                      }
+                    >
+                      <span className="mcp-switch-knob" />
+                    </button>
+                  </label>
+                  <label className="mcp-toggle-row">
+                    <span>
+                      <span className="mcp-toggle-label">Share tools with sub-agents</span>
+                      <span className="mcp-toggle-hint">
+                        Off by default. Sub-agents only see connected app tools when enabled.
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={connectorSettings.allow_sub_agents}
+                      className={`mcp-switch ${connectorSettings.allow_sub_agents ? 'is-on' : ''}`}
+                      onClick={() =>
+                        saveConnectorSettings({
+                          allow_sub_agents: !connectorSettings.allow_sub_agents,
+                        })
+                      }
+                    >
+                      <span className="mcp-switch-knob" />
+                    </button>
+                  </label>
+                </div>
+
+                <div className="connectors-settings-card">
+                  <h3>Manage connections</h3>
+                  <p>
+                    Browse the OAuth catalogue, connect applications with real logos, and
+                    disconnect apps you no longer use.
+                  </p>
+                  <a className="btn-secondary inline-center connectors-settings-link" href="/connectors">
+                    Open Connectors page
+                  </a>
+                </div>
+
+                {connectorStatus && <div className="connectors-settings-status">{connectorStatus}</div>}
+              </div>
+            ) : (
+              <div className="settings-models-pane">
             {/* Reasoning Effort Bar */}
             <div className="reasoning-bar">
               <div className="reasoning-label">
@@ -702,7 +888,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
                 </div>
               )}
-            </div>
+              </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

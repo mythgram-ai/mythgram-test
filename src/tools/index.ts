@@ -38,11 +38,18 @@ import { RESTRICTED_SUB_AGENT_TOOLS } from '../sub-agents/index.js';
 import { listAvailableMcpServersTool } from './list_available_mcp_servers/list_available_mcp_servers.js';
 import { connectLocalMcpServerTool } from './connect_local_mcp_server/connect_local_mcp_server.js';
 import { connectRemoteMcpTool } from './connect_remote_mcp/connect_remote_mcp.js';
+import { listAvailableApplicationConnectorsTool } from './list_available_application_connectors/list_available_application_connectors.js';
+import { connectApplicationsConnectorsTool } from './connect_applications_connectors/connect_applications_connectors.js';
 import {
   executeMcpTool,
   getMcpOpenAIToolDefinitions,
   isMcpToolName,
 } from '../mcp/index.js';
+import {
+  executeConnectorTool,
+  getConnectorToolDefinitionsSync,
+  isConnectorToolName,
+} from '../connector/index.js';
 
 export * from './types.js';
 
@@ -85,6 +92,8 @@ export const ALL_TOOLS: MythgramTool<any>[] = [
   listAvailableMcpServersTool,
   connectLocalMcpServerTool,
   connectRemoteMcpTool,
+  listAvailableApplicationConnectorsTool,
+  connectApplicationsConnectorsTool,
 ];
 
 export const TOOLS_MAP = new Map<string, MythgramTool<any>>(
@@ -101,7 +110,11 @@ export const SUB_AGENT_ALLOWED_TOOLS: MythgramTool<any>[] = ALL_TOOLS.filter(
  * going with OCR/QR tools instead of aborting the task (see read_image.execute).
  */
 export function getOpenAIToolsList(_visionSupport: boolean = true) {
-  return [...ALL_TOOLS.map((t) => toOpenAIToolDefinition(t)), ...getMcpOpenAIToolDefinitions()];
+  return [
+    ...ALL_TOOLS.map((t) => toOpenAIToolDefinition(t)),
+    ...getMcpOpenAIToolDefinitions(),
+    ...getConnectorToolDefinitionsSync(),
+  ];
 }
 
 /**
@@ -120,7 +133,11 @@ export function getSubAgentOpenAIToolsList(
   const native = SUB_AGENT_ALLOWED_TOOLS.filter((t) =>
     allowedSet ? allowedSet.has(t.name) : true
   ).map((t) => toOpenAIToolDefinition(t));
-  return [...native, ...getMcpOpenAIToolDefinitions({ subAgent: true })];
+  return [
+    ...native,
+    ...getMcpOpenAIToolDefinitions({ subAgent: true }),
+    ...getConnectorToolDefinitionsSync({ subAgent: true }),
+  ];
 }
 
 export async function executeNativeTool(
@@ -137,6 +154,17 @@ export async function executeNativeTool(
     return await executeMcpTool(toolName, rawArgs || {}, {
       subAgent: Boolean(context.isSubAgent),
     });
+  }
+  if (isConnectorToolName(toolName)) {
+    if (context.isSubAgent) {
+      const flags = getConnectorToolDefinitionsSync({ subAgent: true });
+      if (!flags.some((def) => def.function.name === toolName)) {
+        throw new Error(
+          `Connector tool "${toolName}" is not shared with sub-agents.`
+        );
+      }
+    }
+    return await executeConnectorTool(toolName, rawArgs || {});
   }
   const tool = TOOLS_MAP.get(toolName);
   if (!tool) {

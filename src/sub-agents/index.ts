@@ -30,6 +30,8 @@ export const RESTRICTED_SUB_AGENT_TOOLS = new Set<string>([
   'present_slides',
   'submit_plan',
   'connect_remote_mcp',
+  'list_available_application_connectors',
+  'connect_applications_connectors',
 ]);
 
 export const DEFAULT_ALLOWED_SUB_AGENT_TOOLS: string[] = [

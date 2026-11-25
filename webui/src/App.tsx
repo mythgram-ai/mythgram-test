@@ -14,6 +14,7 @@ import {
   Bot,
   BookOpen,
   Presentation,
+  Plug,
 } from 'lucide-react';
 import { HomePage } from './pages/HomePage';
 import type { ProviderState } from './components/SettingsModal';
@@ -37,6 +38,9 @@ const SlidesPage = lazy(() =>
 );
 const McpPage = lazy(() =>
   import('./pages/McpPage').then((m) => ({ default: m.McpPage }))
+);
+const ConnectorsPage = lazy(() =>
+  import('./pages/ConnectorsPage').then((m) => ({ default: m.ConnectorsPage }))
 );
 const SettingsModal = lazy(() =>
   import('./components/SettingsModal').then((m) => ({ default: m.SettingsModal }))
@@ -63,6 +67,9 @@ const preloadSlidesPage = () => {
 const preloadMcpPage = () => {
   void import('./pages/McpPage');
 };
+const preloadConnectorsPage = () => {
+  void import('./pages/ConnectorsPage');
+};
 
 type ActivePageType =
   | 'home'
@@ -71,7 +78,8 @@ type ActivePageType =
   | 'subagents'
   | 'skills'
   | 'slides'
-  | 'mcp';
+  | 'mcp'
+  | 'connectors';
 
 interface SessionSummary {
   id: string;
@@ -102,6 +110,7 @@ function parsePageFromLocation(loc: Location): ActivePageType {
   if (loc.pathname.startsWith('/skills')) return 'skills';
   if (loc.pathname.startsWith('/slides')) return 'slides';
   if (loc.pathname.startsWith('/mcp')) return 'mcp';
+  if (loc.pathname.startsWith('/connectors')) return 'connectors';
   return 'home';
 }
 
@@ -433,6 +442,17 @@ export const App: React.FC = () => {
       );
     }
 
+    if (activePage === 'connectors') {
+      return (
+        <Suspense fallback={<PageSkeleton />}>
+          <ConnectorsPage
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
+          />
+        </Suspense>
+      );
+    }
+
     return (
       <HomePage
         workspace={defaultWorkspace}
@@ -605,6 +625,17 @@ export const App: React.FC = () => {
           >
             <McpIcon size={14} style={{ flexShrink: 0 }} />
             <span className="nav-label">MCP</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-link ${activePage === 'connectors' ? 'is-active' : ''}`}
+            title="Connectors"
+            onPointerEnter={preloadConnectorsPage}
+            onClick={() => navigateToPage('connectors', '/connectors')}
+          >
+            <Plug size={14} style={{ flexShrink: 0 }} />
+            <span className="nav-label">Connectors</span>
           </button>
         </nav>
 

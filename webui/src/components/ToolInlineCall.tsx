@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   FileText,
   FilePlus,
@@ -30,6 +30,7 @@ import {
   Eye,
   Check,
   X,
+  Plug,
 } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import type { SubAgentRunItem } from './SubAgentTab';
@@ -49,10 +50,155 @@ export interface PendingInteractiveItem {
   promptId: string;
   toolCallId: string;
   activityId?: string;
-  kind: 'ask_for_something' | 'ask_question_to_user' | 'submit_plan';
+  kind: 'ask_for_something' | 'ask_question_to_user' | 'submit_plan' | 'connect_connector';
   data: any;
   createdAt: number;
 }
+
+const ConnectorConnectCard: React.FC<{
+  pending: PendingInteractiveItem;
+  onSubmit: (promptId: string, response: any) => Promise<void>;
+}> = ({ pending, onSubmit }) => {
+  const data = pending.data || {};
+  const [phase, setPhase] = useState<'idle' | 'waiting' | 'connected' | 'error' | 'timeout'>(
+    'idle'
+  );
+  const [message, setMessage] = useState('');
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    },
+    []
+  );
+
+  const stopPolling = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+  };
+
+  const startPolling = () => {
+    stopPolling();
+    const startedAt = Date.now();
+    timerRef.current = setInterval(async () => {
+      if (Date.now() - startedAt > (data.timeout_seconds || 180) * 1000) {
+        stopPolling();
+        setPhase('timeout');
+        setMessage('Connection timed out. You can retry from the Connectors page.');
+        return;
+      }
+      try {
+        const res = await fetch(
+          `/api/connectors/${encodeURIComponent(data.connector_name)}/status`
+        );
+        const status = await res.json();
+        if (status.connected) {
+          stopPolling();
+          setPhase('connected');
+          setMessage(`${data.name || data.connector_name} connected.`);
+          await onSubmit(pending.promptId, {
+            connected: true,
+            connector_name: data.connector_name,
+          });
+        } else if (status.status === 'error') {
+          stopPolling();
+          setPhase('error');
+          setMessage(status.error || 'Connection failed.');
+        }
+      } catch {
+        // keep polling until the timeout
+      }
+    }, 3000);
+  };
+
+  const handleConnect = () => {
+    setPhase('waiting');
+    setMessage('Waiting for authorization in the opened tab…');
+    if (data.redirect_url) window.open(data.redirect_url, '_blank', 'noopener');
+    startPolling();
+  };
+
+  const handleCancel = async () => {
+    stopPolling();
+    await onSubmit(pending.promptId, { connected: false, cancelled: true });
+  };
+
+  return (
+    <div
+      style={{
+        marginTop: 8,
+        padding: 14,
+        borderRadius: 10,
+        backgroundColor: '#141419',
+        border: '1px solid #3b82f6',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            backgroundColor: '#0f0f13',
+            border: '1px solid #27272a',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            overflow: 'hidden',
+          }}
+        >
+          {data.logo ? (
+            <img
+              src={data.logo}
+              alt={data.name || data.connector_name}
+              style={{ width: 24, height: 24, objectFit: 'contain' }}
+            />
+          ) : (
+            <Plug size={16} />
+          )}
+        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <span style={{ fontSize: 13.5, fontWeight: 600, color: '#f4f4f5' }}>
+            Connect {data.name || data.connector_name}
+          </span>
+          <span style={{ fontSize: 11.5, color: '#9e9ea7' }}>
+            {data.description || 'Authorize this application to give the agent access.'}
+          </span>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <button
+          type="button"
+          className="btn-primary inline-center"
+          onClick={handleConnect}
+          disabled={phase === 'waiting' || phase === 'connected'}
+        >
+          <Plug size={13} />
+          {phase === 'connected' ? 'Connected' : phase === 'waiting' ? 'Waiting…' : 'Connect'}
+        </button>
+        <button type="button" className="btn-secondary" onClick={handleCancel}>
+          Cancel
+        </button>
+        {message && (
+          <span
+            style={{
+              fontSize: 11.5,
+              color: phase === 'error' || phase === 'timeout' ? '#f87171' : '#9e9ea7',
+            }}
+          >
+            {message}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
 
 interface ToolInlineCallProps {
   activity: ToolActivityItem;
@@ -127,6 +273,9 @@ export function getToolIcon(toolName: string) {
     case 'present_slides':
     case 'organize_slides':
       return <Presentation size={13} />;
+    case 'list_available_application_connectors':
+    case 'connect_applications_connectors':
+      return <Plug size={13} />;
     default:
       return <Terminal size={13} />;
   }
@@ -202,6 +351,10 @@ export function formatToolSummaryText(toolName: string, argsJson: string): strin
         return `create_skill "${args.name || ''}"`;
       case 'list_skills':
         return `list_skills`;
+      case 'list_available_application_connectors':
+        return `list_available_application_connectors`;
+      case 'connect_applications_connectors':
+        return `connect_applications_connectors ${args.connector_name || ''}`;
       case 'organize_slides':
         return `organize_slides "${args.project_name || ''}" (${Array.isArray(args.slides) ? args.slides.length : 0} slides)`;
       case 'manage_slides':
@@ -606,7 +759,12 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
         );
       }
 
-      // 8. ask_question_to_user interactive options + custom input
+      // 8. connect_applications_connectors connector card with real logo + auth button
+      if (tool === 'connect_applications_connectors' && matchingPending && onSubmitInteractive) {
+        return <ConnectorConnectCard pending={matchingPending} onSubmit={onSubmitInteractive} />;
+      }
+
+      // 9. ask_question_to_user interactive options + custom input
       if (tool === 'ask_question_to_user' && matchingPending && onSubmitInteractive) {
         const questions = Array.isArray(parsedArgs.questions)
           ? parsedArgs.questions

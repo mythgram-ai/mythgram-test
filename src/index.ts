@@ -66,6 +66,15 @@ import {
   normalizeLocalConfig,
   ensureMcpStore,
 } from './mcp/index.js';
+import {
+  checkConnectorConnection,
+  disconnectConnector,
+  getConnectorSettings,
+  listConnectorViews,
+  refreshConnectorToolCache,
+  startConnectorConnection,
+  updateConnectorSettings,
+} from './connector/index.js';
 
 // Initialize .mythgram datadir and stores immediately on startup
 initDataDir();
@@ -74,6 +83,7 @@ void ensureSubAgentsStore();
 void ensureSkillsStore();
 void ensureMcpStore();
 void initializeMcp();
+void refreshConnectorToolCache();
 
 const app = new Hono();
 app.use('*', cors());
@@ -603,6 +613,69 @@ app.get('/api/mcp/oauth/callback', async (c) => {
       `${webuiBase}/mcp?oauth=error&reason=${encodeURIComponent(err?.message || 'oauth_failed')}`
     );
   }
+});
+
+// ==================== APPLICATION CONNECTORS (Composio) ====================
+app.get('/api/connectors/settings', async (c) => {
+  const settings = await getConnectorSettings();
+  return c.json({ ok: true, settings });
+});
+
+app.post('/api/connectors/settings', async (c) => {
+  try {
+    const body = await c.req.json();
+    const settings = await updateConnectorSettings({
+      api_key: typeof body.api_key === 'string' ? body.api_key : undefined,
+      enabled: typeof body.enabled === 'boolean' ? body.enabled : undefined,
+      allow_sub_agents:
+        typeof body.allow_sub_agents === 'boolean' ? body.allow_sub_agents : undefined,
+    });
+    return c.json({ ok: true, settings });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to save connector settings.' }, 400);
+  }
+});
+
+app.get('/api/connectors', async (c) => {
+  const settings = await getConnectorSettings();
+  if (!settings.configured) {
+    return c.json({ ok: false, configured: false, settings, connectors: [] });
+  }
+  try {
+    const connectors = await listConnectorViews({
+      search: c.req.query('search') || undefined,
+      force: c.req.query('force') === '1',
+    });
+    return c.json({ ok: true, configured: true, settings, connectors });
+  } catch (err: any) {
+    return c.json(
+      { ok: false, configured: true, settings, connectors: [], error: err?.message || 'Failed to load connectors.' },
+      400
+    );
+  }
+});
+
+app.post('/api/connectors/:slug/connect', async (c) => {
+  try {
+    const link = await startConnectorConnection(c.req.param('slug'));
+    return c.json({ ok: true, ...link });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to start connection.' }, 400);
+  }
+});
+
+app.get('/api/connectors/:slug/status', async (c) => {
+  try {
+    const status = await checkConnectorConnection(c.req.param('slug'));
+    return c.json({ ok: true, ...status });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to read status.' }, 400);
+  }
+});
+
+app.post('/api/connectors/:slug/disconnect', async (c) => {
+  const removed = await disconnectConnector(c.req.param('slug'));
+  return c.json({ ok: true, removed });
 });
 
 // ==================== SKILLS (.mythgram/skills) ====================

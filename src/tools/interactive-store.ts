@@ -3,7 +3,8 @@ import { agentEvents } from '../agents/agent.js';
 export type InteractiveKind =
   | 'ask_for_something'
   | 'ask_question_to_user'
-  | 'submit_plan';
+  | 'submit_plan'
+  | 'connect_connector';
 
 export interface PendingInteractivePrompt {
   id: string;
@@ -25,10 +26,12 @@ export function waitForUserInteraction(params: {
   kind: InteractiveKind;
   payload: any;
   signal?: AbortSignal;
+  timeoutMs?: number;
 }): Promise<any> {
   const promptId = params.toolCallId || `inter_${Date.now()}`;
 
   return new Promise((resolve, reject) => {
+    let timer: NodeJS.Timeout | undefined;
     const entry: PendingInteractivePrompt = {
       id: promptId,
       sessionId: params.sessionId,
@@ -38,6 +41,7 @@ export function waitForUserInteraction(params: {
       payload: params.payload,
       createdAt: Date.now(),
       resolve: (val: any) => {
+        if (timer) clearTimeout(timer);
         pendingPrompts.delete(promptId);
         agentEvents.emit({
           type: 'interactive_resolved',
@@ -56,8 +60,28 @@ export function waitForUserInteraction(params: {
 
     pendingPrompts.set(promptId, entry);
 
+    if (params.timeoutMs && params.timeoutMs > 0) {
+      timer = setTimeout(() => {
+        if (!pendingPrompts.has(promptId)) return;
+        pendingPrompts.delete(promptId);
+        agentEvents.emit({
+          type: 'interactive_resolved',
+          sessionId: params.sessionId,
+          payload: {
+            promptId,
+            toolCallId: params.toolCallId,
+            kind: params.kind,
+            response: { timed_out: true },
+          },
+          timestamp: Date.now(),
+        });
+        reject(new Error('Timed out waiting for the user to complete the connection.'));
+      }, params.timeoutMs);
+    }
+
     if (params.signal) {
       if (params.signal.aborted) {
+        if (timer) clearTimeout(timer);
         pendingPrompts.delete(promptId);
         reject(new Error('Operation aborted by user.'));
         return;
@@ -66,6 +90,7 @@ export function waitForUserInteraction(params: {
         'abort',
         () => {
           if (pendingPrompts.has(promptId)) {
+            if (timer) clearTimeout(timer);
             pendingPrompts.delete(promptId);
             reject(new Error('Operation aborted by user.'));
           }
