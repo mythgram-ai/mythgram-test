@@ -45,6 +45,15 @@ import {
   RESTRICTED_SUB_AGENT_TOOLS,
 } from './sub-agents/index.js';
 import {
+  listCustomAgents,
+  createOrUpdateCustomAgent,
+  deleteCustomAgent,
+  ensureCustomAgentsStore,
+  getActiveCustomAgentId,
+  setActiveCustomAgent,
+  getCustomAgentLogo,
+} from './custom-agents/index.js';
+import {
   listSkills,
   getSkillDetail,
   createOrUpdateManualSkill,
@@ -106,6 +115,7 @@ import {
 initDataDir();
 void ensureArtifactsStore();
 void ensureSubAgentsStore();
+void ensureCustomAgentsStore();
 void ensureSkillsStore();
 void ensureMemoryStore();
 void ensureKnowledgeStore();
@@ -515,6 +525,100 @@ app.get('/api/sub-agent-runs/:runId/stream', (c) => {
     }
 
     unsubscribe();
+  });
+});
+
+// ==================== CUSTOM AGENTS (.mythgram/custom-agents) ====================
+// Custom agents share the full main-agent runtime (same tools, no sub-agent restrictions);
+// the active custom agent only overrides the persona/system prompt and the exposed toolset.
+function customAgentToolsList() {
+  return getOpenAIToolsList(true).map((def) => ({
+    name: def.function.name,
+    description: def.function.description || '',
+  }));
+}
+
+app.get('/api/custom-agents', async (c) => {
+  const agents = await listCustomAgents();
+  const activeAgentId = getActiveCustomAgentId() || null;
+  return c.json({
+    ok: true,
+    agents,
+    activeAgentId,
+    activeAgent: agents.find((a) => a.id === activeAgentId) || null,
+    tools: customAgentToolsList(),
+  });
+});
+
+app.get('/api/custom-agents/allowed-tools', (c) => {
+  return c.json({ ok: true, tools: customAgentToolsList() });
+});
+
+app.post('/api/custom-agents', async (c) => {
+  try {
+    const body = await c.req.json();
+    const created = await createOrUpdateCustomAgent({
+      id: body.id ? String(body.id) : undefined,
+      name: String(body.name || ''),
+      description: String(body.description || ''),
+      systemPrompt: String(body.systemPrompt || body.system_prompt || ''),
+      tools: Array.isArray(body.tools) ? body.tools.map(String) : undefined,
+      logoDataUrl:
+        typeof body.logoDataUrl === 'string' && body.logoDataUrl.trim()
+          ? body.logoDataUrl
+          : undefined,
+      useDefaultLogo: Boolean(body.useDefaultLogo),
+    });
+    const agents = await listCustomAgents();
+    return c.json({
+      ok: true,
+      agent: created,
+      agents,
+      activeAgentId: getActiveCustomAgentId() || null,
+    });
+  } catch (err: any) {
+    return c.json(
+      { ok: false, error: err?.message || 'Failed to save custom agent' },
+      400
+    );
+  }
+});
+
+app.post('/api/custom-agents/deactivate', async (c) => {
+  await setActiveCustomAgent(null);
+  return c.json({ ok: true, activeAgentId: null });
+});
+
+app.post('/api/custom-agents/:id/activate', async (c) => {
+  try {
+    const activeAgentId = await setActiveCustomAgent(c.req.param('id'));
+    return c.json({ ok: true, activeAgentId });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to activate' }, 400);
+  }
+});
+
+app.delete('/api/custom-agents/:id', async (c) => {
+  const res = await deleteCustomAgent(c.req.param('id'));
+  if (!res.deleted) {
+    return c.json({ ok: false, error: res.reason || 'Cannot delete custom agent' }, 400);
+  }
+  const agents = await listCustomAgents();
+  return c.json({
+    ok: true,
+    agents,
+    activeAgentId: getActiveCustomAgentId() || null,
+  });
+});
+
+app.get('/api/custom-agents/:id/logo', async (c) => {
+  const logo = await getCustomAgentLogo(c.req.param('id'));
+  if (!logo) return c.json({ ok: false, error: 'Logo not found' }, 404);
+  return c.body(logo.buffer as any, 200, {
+    'Content-Type': logo.contentType,
+    'Cache-Control': 'public, max-age=86400',
+    'X-Content-Type-Options': 'nosniff',
+    'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
   });
 });
 

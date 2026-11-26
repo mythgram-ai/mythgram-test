@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Settings, Menu } from 'lucide-react';
 import { PromptBox, UploadedAttachment } from '../components/PromptBox';
 
@@ -9,6 +9,7 @@ interface HomePageProps {
   onOpenSettings: () => void;
   onOpenWorkspaceModal: () => void;
   onOpenSidebar: () => void;
+  onOpenCustomAgents?: () => void;
   onStartNewSessionWithPrompt: (
     prompt: string,
     attachments: UploadedAttachment[]
@@ -22,9 +23,28 @@ export const HomePage: React.FC<HomePageProps> = ({
   onOpenSettings,
   onOpenWorkspaceModal,
   onOpenSidebar,
+  onOpenCustomAgents,
   onStartNewSessionWithPrompt,
 }) => {
   const [prompt, setPrompt] = useState('');
+  const [activeAgent, setActiveAgent] = useState<{ name: string; logo: string } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/custom-agents')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && data?.activeAgent) {
+          setActiveAgent({ name: data.activeAgent.name, logo: data.activeAgent.logo });
+        }
+      })
+      .catch(() => {
+        // ignore
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSubmit = async (attachments: UploadedAttachment[]) => {
     const text = prompt;
@@ -53,6 +73,21 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         <div className="topbar-right">
+          {onOpenCustomAgents && (
+            <button
+              type="button"
+              className="topbar-btn"
+              onClick={onOpenCustomAgents}
+              title="Custom Agents"
+            >
+              <img
+                src={activeAgent?.logo || '/logo.svg'}
+                alt=""
+                style={{ width: 14, height: 14, borderRadius: 4, objectFit: 'cover' }}
+              />
+              <span>{activeAgent?.name || 'Default Agent'}</span>
+            </button>
+          )}
           <button
             type="button"
             className="topbar-btn"

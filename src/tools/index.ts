@@ -120,13 +120,26 @@ export const SUB_AGENT_ALLOWED_TOOLS: MythgramTool<any>[] = ALL_TOOLS.filter(
  * read_image is intentionally always exposed to the model. When the active model has no
  * vision support the tool itself returns a clear error message that tells the LLM to keep
  * going with OCR/QR tools instead of aborting the task (see read_image.execute).
+ *
+ * `allowedToolNames` restricts the exposed toolset to the given names. An empty or missing
+ * list exposes every tool of the main runtime.
  */
-export function getOpenAIToolsList(_visionSupport: boolean = true) {
-  return [
-    ...ALL_TOOLS.map((t) => toOpenAIToolDefinition(t)),
-    ...getMcpOpenAIToolDefinitions(),
-    ...getConnectorToolDefinitionsSync(),
-  ];
+export function getOpenAIToolsList(
+  _visionSupport: boolean = true,
+  allowedToolNames?: string[]
+) {
+  const allowed =
+    allowedToolNames && allowedToolNames.length > 0 ? new Set(allowedToolNames) : null;
+  const native = (allowed ? ALL_TOOLS.filter((t) => allowed.has(t.name)) : ALL_TOOLS).map(
+    (t) => toOpenAIToolDefinition(t)
+  );
+  const mcp = getMcpOpenAIToolDefinitions().filter(
+    (def) => !allowed || allowed.has(def.function.name)
+  );
+  const connectors = getConnectorToolDefinitionsSync().filter(
+    (def) => !allowed || allowed.has(def.function.name)
+  );
+  return [...native, ...mcp, ...connectors];
 }
 
 /**

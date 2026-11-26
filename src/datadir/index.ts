@@ -13,6 +13,9 @@ export interface MythgramPaths {
   subAgentsDir: string;
   subAgentsJsonPath: string;
   subAgentOutputsDir: string;
+  customAgentsDir: string;
+  customAgentsJsonPath: string;
+  customAgentLogosDir: string;
   skillsDir: string;
   skillsJsonPath: string;
   mcpDir: string;
@@ -40,6 +43,8 @@ export function ensureDataDirIntegrity(paths: MythgramPaths): MythgramPaths {
     paths.artifactsDir,
     paths.subAgentsDir,
     paths.subAgentOutputsDir,
+    paths.customAgentsDir,
+    paths.customAgentLogosDir,
     paths.skillsDir,
     paths.mcpDir,
     paths.memoryDir,
@@ -60,6 +65,7 @@ export function ensureDataDirIntegrity(paths: MythgramPaths): MythgramPaths {
   for (const jsonPath of [
     paths.artifactsJsonPath,
     paths.subAgentsJsonPath,
+    paths.customAgentsJsonPath,
     paths.skillsJsonPath,
     paths.mcpServersJsonPath,
     paths.memoryJsonPath,
@@ -99,6 +105,10 @@ export function initDataDir(
   const subAgentsJsonPath = path.join(subAgentsDir, 'sub-agents.json');
   const subAgentOutputsDir = path.join(subAgentsDir, 'outputs');
 
+  const customAgentsDir = path.join(dataDir, 'custom-agents');
+  const customAgentsJsonPath = path.join(customAgentsDir, 'custom-agents.json');
+  const customAgentLogosDir = path.join(customAgentsDir, 'logos');
+
   const skillsDir = path.join(dataDir, 'skills');
   const skillsJsonPath = path.join(skillsDir, 'skills.json');
 
@@ -126,6 +136,9 @@ export function initDataDir(
     subAgentsDir,
     subAgentsJsonPath,
     subAgentOutputsDir,
+    customAgentsDir,
+    customAgentsJsonPath,
+    customAgentLogosDir,
     skillsDir,
     skillsJsonPath,
     mcpDir,

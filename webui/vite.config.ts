@@ -1,6 +1,17 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+const backendTarget = process.env.MYTHGRAM_BACKEND_URL || 'http://127.0.0.1:1000';
+const devPort = Number(process.env.PORT || 2000);
+
+const proxy = {
+  '/api': {
+    target: backendTarget,
+    changeOrigin: true,
+    ws: true,
+  },
+};
+
 export default defineConfig({
   plugins: [react()],
   build: {
@@ -16,27 +27,15 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 2000,
+    port: devPort,
     strictPort: true,
     allowedHosts: true,
-    proxy: {
-      '/api': {
-        target: 'http://127.0.0.1:1000',
-        changeOrigin: true,
-        ws: true,
-      },
-    },
+    proxy,
   },
   preview: {
     host: '0.0.0.0',
-    port: 2000,
+    port: devPort,
     strictPort: true,
-    proxy: {
-      '/api': {
-        target: 'http://127.0.0.1:1000',
-        changeOrigin: true,
-        ws: true,
-      },
-    },
+    proxy,
   },
 });

@@ -17,14 +17,19 @@ Mythgram is an autonomous, general-purpose AI software engineering and operation
    - 10 built-in default sub-agents (`code-architect`, `frontend-specialist`, `backend-engineer`, `bug-hunter`, `test-runner`, `security-auditor`, `docs-writer`, `data-analyst`, `refactoring-expert`, `slide-designer`) protected from deletion.
    - Supports single or parallel multi-sub-agent execution (`wait_for_output: true | false`) using the user's active LLM settings, 2-second RAM-to-SQLite buffering, automatic abort propagation, and restricted tool filtering.
    - Dedicated lazy-loaded **Sub-Agents Page** (`/sub-agents`) supporting single or batch creation, plus a live streaming **Sub-Agent Tab** in Chat Page.
-4. **Skills System (`src/skills`, `.mythgram/skills/skills.json`)**:
+4. **Custom Agents System (`src/custom-agents`, `.mythgram/custom-agents`)**:
+   - Custom agents are the main agent runtime with modifications: they reuse the same autonomous ReAct loop and full tool system (no sub-agent tool restrictions).
+   - Each custom agent has a name, logo (uploaded image or default logo), description, system prompt (written or uploaded from a file), and a user-selected toolset.
+   - Activate any custom agent or the default agent at any time; the change applies to the next run without a server restart.
+   - Dedicated lazy-loaded **Custom Agents Page** (`/custom-agents`) plus a sidebar entry and active-agent indicator on the Home Page.
+5. **Skills System (`src/skills`, `.mythgram/skills/skills.json`)**:
    - 2 built-in default skills (`fullstack-web-architect`, `automated-code-auditor`) plus custom skills created manually or via `create_skill`.
    - Dedicated lazy-loaded **Skills Page** (`/skills`) with `SKILL.md` editor and subfolder creation.
-5. **Slides System (`slide_projects` in SQLite)**:
+6. **Slides System (`slide_projects` in SQLite)**:
    - Organizes, manages, and presents 16:9 HTML slide decks with export/download support for **PNG, JPEG, SVG, PDF, PPTX, and HTML**; each deck downloads as a single ZIP archive in the selected format.
    - Dedicated lazy-loaded **Slides Page** (`/slides`) and **Slides Tab** in Chat Page.
 
-6. **LSP Code Intelligence (`src/lsp`, `lsp` tool)**:
+7. **LSP Code Intelligence (`src/lsp`, `lsp` tool)**:
    - Native JSON-RPC 2.0 Language Server Protocol engine over stdio with `Content-Length` framing, per-project server lifecycle, document synchronization, request cancellation, and idle shutdown.
    - Supports `goToDefinition`, `findReferences`, `hover`, `documentSymbol`, `workspaceSymbol`, `goToImplementation`, `prepareCallHierarchy`, `incomingCalls`, and `outgoingCalls`.
    - Ships a built-in registry for TypeScript, Python, Go, Rust, C/C++, Ruby, Lua, PHP, shell, YAML, JSON, HTML, CSS, Kotlin, Swift, Zig, and C# servers. Add or override servers in `.mythgram/lsp.json` or via `MYTHGRAM_LSP_SERVERS`.
@@ -38,6 +43,7 @@ Mythgram is an autonomous, general-purpose AI software engineering and operation
 │   ├── mythgram.sqlite            # High-throughput SQLite WAL database (sessions, messages, slides, todos, sub_agent_runs)
 │   ├── artifacts/                 # Stored artifact files + artifacts.json
 │   ├── sub-agents/                # Custom sub-agent JSON files + sub-agents.json + outputs/
+│   ├── custom-agents/             # Custom agent JSON store + logos/ for uploaded agent logos
 │   ├── skills/                    # Skill directories (SKILL.md + subfolders) + skills.json
 │   ├── uploads/                   # User file & folder attachments
 │   ├── cache/                     # Cached metadata
@@ -48,6 +54,7 @@ Mythgram is an autonomous, general-purpose AI software engineering and operation
 │   ├── db/index.ts                # Native node:sqlite engine + 2-second RAM buffer flush loop
 │   ├── artifacts/index.ts         # Artifacts store manager (.mythgram/artifacts)
 │   ├── sub-agents/index.ts        # 10 default sub-agents + custom sub-agent store (.mythgram/sub-agents)
+│   ├── custom-agents/index.ts     # Custom main-runtime agent store (.mythgram/custom-agents) + active agent
 │   ├── skills/index.ts            # 2 default skills + custom skill store (.mythgram/skills)
 │   ├── agents/
 │   │   ├── agent.ts               # Main autonomous ReAct loop & resilient streaming engine
@@ -58,7 +65,7 @@ Mythgram is an autonomous, general-purpose AI software engineering and operation
 │   └── tools/                     # 35 Zod-schema native function-calling tools + unit tests
 └── webui/                         # React 19 + Vite 6 + TypeScript Frontend (Port 2000)
     └── src/
-        ├── pages/                 # Lazy-loaded pages (HomePage, ChatPage, ArtifactsPage, SubAgentsPage, SkillsPage, SlidesPage)
+        ├── pages/                 # Lazy-loaded pages (HomePage, ChatPage, ArtifactsPage, SubAgentsPage, CustomAgentsPage, SkillsPage, SlidesPage)
         └── components/            # Right-panel tabs (ComputerTab, BrowserTab, ArtifactTab, SubAgentTab, SlidesTab, FilesTab, TerminalTab)
 ```
 

@@ -7,6 +7,7 @@ import { getOpenAIToolsList, executeNativeTool } from '../tools/index.js';
 import { abortSubAgentsForSession } from './sub-agent.js';
 import { cancelPendingInteractionsForSession } from '../tools/interactive-store.js';
 import { buildMemoryContext, isFirstUserRequest } from '../memory/index.js';
+import { getActiveCustomAgent, CustomAgentDefinition } from '../custom-agents/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -99,7 +100,8 @@ export function abortSessionRun(sessionId: string): boolean {
 
 async function loadSystemPrompt(
   workspaceRoot: string,
-  memoryContext: string = ''
+  memoryContext: string = '',
+  customAgent: CustomAgentDefinition | null = null
 ): Promise<string> {
   const promptPath = path.join(__dirname, 'prompt', 'system-prompt.md');
   let base: string;
@@ -108,6 +110,15 @@ async function loadSystemPrompt(
     base = raw.replace(/\$\{workspaceRoot\}/g, workspaceRoot);
   } catch {
     base = `You are Mythgram, an autonomous AI agent. Active workspace: ${workspaceRoot}`;
+  }
+  if (customAgent) {
+    const description = customAgent.description
+      ? `Agent description: ${customAgent.description}\n`
+      : '';
+    base += `\n\n## Active Custom Agent: ${customAgent.name}
+${description}You are running as the user's custom agent "${customAgent.name}". It uses the exact same Mythgram runtime, capabilities, and tool system described above. The custom agent instructions below define your persona, focus, and working style, and take precedence over the default persona where they conflict. All runtime rules (absolute paths, native tool calls, ReAct loop, and safety requirements) still apply.
+
+${customAgent.system_prompt}`;
   }
   return memoryContext ? `${base}\n\n${memoryContext}` : base;
 }
@@ -188,6 +199,15 @@ export async function runAgentLoop(sessionId: string): Promise<void> {
     memoryContext = '';
   }
 
+  // The active custom agent is captured once per run so activating another agent
+  // mid-run does not swap prompts or tools under the model.
+  let customAgent: CustomAgentDefinition | null = null;
+  try {
+    customAgent = await getActiveCustomAgent();
+  } catch {
+    customAgent = null;
+  }
+
   try {
     // Unlimited ReAct loop: Thought -> Action -> Observation -> Repeat
     while (!abortController.signal.aborted) {
@@ -197,7 +217,11 @@ export async function runAgentLoop(sessionId: string): Promise<void> {
       const providerCreds = getProviderRuntimeCredentials(currentSession.provider_id);
       if (visionSupported === null) visionSupported = providerCreds.visionSupport;
       const reasoningEffort = db.getSetting('reasoning_effort', 'default');
-      const systemPrompt = await loadSystemPrompt(currentSession.workspace, memoryContext);
+      const systemPrompt = await loadSystemPrompt(
+        currentSession.workspace,
+        memoryContext,
+        customAgent
+      );
       const historyRows = db.getSessionMessages(sessionId);
 
       // Build OpenAI-compatible messages array
@@ -287,7 +311,10 @@ export async function runAgentLoop(sessionId: string): Promise<void> {
         timestamp: Date.now(),
       });
 
-      const toolsList = getOpenAIToolsList(visionSupported ?? true);
+      const toolsList = getOpenAIToolsList(
+        visionSupported ?? true,
+        customAgent?.tools
+      );
       const assistantMsgId = generateId('msg');
 
       db.createOrUpdateRamMessage({

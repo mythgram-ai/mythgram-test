@@ -17,6 +17,7 @@ import {
   Plug,
   Brain,
   Database,
+  Sparkles,
 } from 'lucide-react';
 import { HomePage } from './pages/HomePage';
 import type { ProviderState } from './components/SettingsModal';
@@ -31,6 +32,9 @@ const ArtifactsPage = lazy(() =>
 );
 const SubAgentsPage = lazy(() =>
   import('./pages/SubAgentsPage').then((m) => ({ default: m.SubAgentsPage }))
+);
+const CustomAgentsPage = lazy(() =>
+  import('./pages/CustomAgentsPage').then((m) => ({ default: m.CustomAgentsPage }))
 );
 const SkillsPage = lazy(() =>
   import('./pages/SkillsPage').then((m) => ({ default: m.SkillsPage }))
@@ -66,6 +70,9 @@ const preloadArtifactsPage = () => {
 const preloadSubAgentsPage = () => {
   void import('./pages/SubAgentsPage');
 };
+const preloadCustomAgentsPage = () => {
+  void import('./pages/CustomAgentsPage');
+};
 const preloadSkillsPage = () => {
   void import('./pages/SkillsPage');
 };
@@ -90,6 +97,7 @@ type ActivePageType =
   | 'chat'
   | 'artifacts'
   | 'subagents'
+  | 'customagents'
   | 'skills'
   | 'memory'
   | 'knowledge'
@@ -123,6 +131,7 @@ function parsePageFromLocation(loc: Location): ActivePageType {
   if (parseSessionIdFromLocation(loc)) return 'chat';
   if (loc.pathname.startsWith('/artifacts')) return 'artifacts';
   if (loc.pathname.startsWith('/sub-agents')) return 'subagents';
+  if (loc.pathname.startsWith('/custom-agents')) return 'customagents';
   if (loc.pathname.startsWith('/skills')) return 'skills';
   if (loc.pathname.startsWith('/memory')) return 'memory';
   if (loc.pathname.startsWith('/knowledge')) return 'knowledge';
@@ -427,6 +436,17 @@ export const App: React.FC = () => {
       );
     }
 
+    if (activePage === 'customagents') {
+      return (
+        <Suspense fallback={<PageSkeleton />}>
+          <CustomAgentsPage
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
+          />
+        </Suspense>
+      );
+    }
+
     if (activePage === 'skills') {
       return (
         <Suspense fallback={<PageSkeleton />}>
@@ -501,6 +521,7 @@ export const App: React.FC = () => {
         onOpenSettings={() => setSettingsOpen(true)}
         onOpenWorkspaceModal={() => setWorkspaceModalOpen(true)}
         onOpenSidebar={() => setMobileSidebarOpen(true)}
+        onOpenCustomAgents={() => navigateToPage('customagents', '/custom-agents')}
         onStartNewSessionWithPrompt={handleStartNewSessionWithPrompt}
       />
     );
@@ -630,6 +651,17 @@ export const App: React.FC = () => {
           >
             <Bot size={14} style={{ flexShrink: 0 }} />
             <span className="nav-label">Sub-Agents</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-link ${activePage === 'customagents' ? 'is-active' : ''}`}
+            title="Custom Agents"
+            onPointerEnter={preloadCustomAgentsPage}
+            onClick={() => navigateToPage('customagents', '/custom-agents')}
+          >
+            <Sparkles size={14} style={{ flexShrink: 0 }} />
+            <span className="nav-label">Custom Agents</span>
           </button>
 
           <button
