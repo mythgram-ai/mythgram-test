@@ -46,6 +46,7 @@ import { githubRepositorySearchTool } from './github_repository_search/github_re
 import { webSearchTool } from './web_search/web_search.js';
 import { imageSearchTool } from './image_search/image_search.js';
 import { fatchWebUrlsTool } from './fatch_web_urls/fatch_web_urls.js';
+import { generateSpeechTool } from './generate_speech/generate_speech.js';
 import {
   executeMcpTool,
   getMcpOpenAIToolDefinitions,
@@ -106,6 +107,7 @@ export const ALL_TOOLS: MythgramTool<any>[] = [
   webSearchTool,
   imageSearchTool,
   fatchWebUrlsTool,
+  generateSpeechTool,
 ];
 
 export const TOOLS_MAP = new Map<string, MythgramTool<any>>(

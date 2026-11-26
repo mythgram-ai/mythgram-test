@@ -18,6 +18,8 @@ import {
   Brain,
   Database,
   Sparkles,
+  Volume2,
+  Image,
 } from 'lucide-react';
 import { HomePage } from './pages/HomePage';
 import type { ProviderState } from './components/SettingsModal';
@@ -53,6 +55,14 @@ const McpPage = lazy(() =>
 );
 const ConnectorsPage = lazy(() =>
   import('./pages/ConnectorsPage').then((m) => ({ default: m.ConnectorsPage }))
+);
+const TtsPage = lazy(() =>
+  import('./pages/TtsPage').then((m) => ({ default: m.TtsPage }))
+);
+const MediaGenerationPage = lazy(() =>
+  import('./pages/MediaGenerationPage').then((m) => ({
+    default: m.MediaGenerationPage,
+  }))
 );
 const SettingsModal = lazy(() =>
   import('./components/SettingsModal').then((m) => ({ default: m.SettingsModal }))
@@ -91,6 +101,12 @@ const preloadMcpPage = () => {
 const preloadConnectorsPage = () => {
   void import('./pages/ConnectorsPage');
 };
+const preloadTtsPage = () => {
+  void import('./pages/TtsPage');
+};
+const preloadMediaGenerationPage = () => {
+  void import('./pages/MediaGenerationPage');
+};
 
 type ActivePageType =
   | 'home'
@@ -103,7 +119,9 @@ type ActivePageType =
   | 'knowledge'
   | 'slides'
   | 'mcp'
-  | 'connectors';
+  | 'connectors'
+  | 'tts'
+  | 'mediageneration';
 
 interface SessionSummary {
   id: string;
@@ -138,6 +156,10 @@ function parsePageFromLocation(loc: Location): ActivePageType {
   if (loc.pathname.startsWith('/slides')) return 'slides';
   if (loc.pathname.startsWith('/mcp')) return 'mcp';
   if (loc.pathname.startsWith('/connectors')) return 'connectors';
+  if (loc.pathname.startsWith('/tts')) return 'tts';
+  if (loc.pathname.startsWith('/media-generation') || loc.pathname.startsWith('/media')) {
+    return 'mediageneration';
+  }
   return 'home';
 }
 
@@ -513,6 +535,30 @@ export const App: React.FC = () => {
       );
     }
 
+    if (activePage === 'tts') {
+      return (
+        <Suspense fallback={<PageSkeleton />}>
+          <TtsPage
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
+          />
+        </Suspense>
+      );
+    }
+
+    if (activePage === 'mediageneration') {
+      return (
+        <Suspense fallback={<PageSkeleton />}>
+          <MediaGenerationPage
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
+            onNavigateMcp={() => navigateToPage('mcp', '/mcp')}
+            onNavigateConnectors={() => navigateToPage('connectors', '/connectors')}
+          />
+        </Suspense>
+      );
+    }
+
     return (
       <HomePage
         workspace={defaultWorkspace}
@@ -728,6 +774,28 @@ export const App: React.FC = () => {
           >
             <Plug size={14} style={{ flexShrink: 0 }} />
             <span className="nav-label">Connectors</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-link ${activePage === 'tts' ? 'is-active' : ''}`}
+            title="Voice Generation (Local TTS)"
+            onPointerEnter={preloadTtsPage}
+            onClick={() => navigateToPage('tts', '/tts')}
+          >
+            <Volume2 size={14} style={{ flexShrink: 0 }} />
+            <span className="nav-label">TTS</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-link ${activePage === 'mediageneration' ? 'is-active' : ''}`}
+            title="Media Generation"
+            onPointerEnter={preloadMediaGenerationPage}
+            onClick={() => navigateToPage('mediageneration', '/media-generation')}
+          >
+            <Image size={14} style={{ flexShrink: 0 }} />
+            <span className="nav-label">Media Gen</span>
           </button>
         </nav>
 

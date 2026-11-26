@@ -31,6 +31,7 @@ import {
   Check,
   X,
   Plug,
+  Volume2,
 } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import type { SubAgentRunItem } from './SubAgentTab';
@@ -276,6 +277,8 @@ export function getToolIcon(toolName: string) {
     case 'list_available_application_connectors':
     case 'connect_applications_connectors':
       return <Plug size={13} />;
+    case 'generate_speech':
+      return <Volume2 size={13} />;
     default:
       return <Terminal size={13} />;
   }
@@ -361,6 +364,8 @@ export function formatToolSummaryText(toolName: string, argsJson: string): strin
         return `manage_slides ${args.action || ''} (${args.project_id || ''})`;
       case 'present_slides':
         return `present_slides [${Array.isArray(args.project_ids) ? args.project_ids.join(', ') : ''}]`;
+      case 'generate_speech':
+        return `generate_speech → ${args.output_directory || ''}`;
       default:
         return toolName;
     }

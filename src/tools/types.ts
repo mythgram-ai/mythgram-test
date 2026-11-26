@@ -37,7 +37,7 @@ export interface MythgramTool<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
 /**
  * Converts a MythgramTool (Zod schema) into OpenAI native function-calling tool schema.
  */
-export function toOpenAIToolDefinition(tool: MythgramTool): {
+export function toOpenAIToolDefinition(tool: MythgramTool<any>): {
   type: 'function';
   function: {
     name: string;

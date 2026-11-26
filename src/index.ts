@@ -110,6 +110,15 @@ import {
   startConnectorConnection,
   updateConnectorSettings,
 } from './connector/index.js';
+import {
+  ensureTtsStore,
+  getTtsSettings,
+  updateTtsSettings,
+  getLocalTtsStatus,
+  startLocalTtsService,
+  stopLocalTtsService,
+  clearLocalTtsLogs,
+} from './tts/index.js';
 
 // Initialize .mythgram datadir and stores immediately on startup
 initDataDir();
@@ -120,6 +129,7 @@ void ensureSkillsStore();
 void ensureMemoryStore();
 void ensureKnowledgeStore();
 void ensureMcpStore();
+void ensureTtsStore();
 void initializeMcp();
 void refreshConnectorToolCache();
 
@@ -1023,6 +1033,57 @@ app.post('/api/web-search/test', async (c) => {
   } catch (err: any) {
     return c.json({ ok: false, error: err?.message || 'Search test failed' }, 400);
   }
+});
+
+// ==================== LOCAL TTS (.mythgram/tts) ====================
+app.get('/api/tts/status', async (c) => {
+  const status = await getLocalTtsStatus();
+  const settings = await getTtsSettings();
+  return c.json({ ok: true, ...status, settings });
+});
+
+app.get('/api/tts/settings', async (c) => {
+  const settings = await getTtsSettings();
+  return c.json({ ok: true, settings });
+});
+
+app.post('/api/tts/settings', async (c) => {
+  try {
+    const body = await c.req.json();
+    const settings = await updateTtsSettings({
+      base_url: body.base_url ?? body.baseUrl,
+    });
+    const status = await getLocalTtsStatus();
+    return c.json({ ok: true, settings, ...status });
+  } catch (err: any) {
+    return c.json(
+      { ok: false, error: err?.message || 'Failed to save TTS settings' },
+      400
+    );
+  }
+});
+
+app.post('/api/tts/start', async (c) => {
+  try {
+    const status = await startLocalTtsService();
+    return c.json({ ok: true, ...status });
+  } catch (err: any) {
+    return c.json(
+      { ok: false, error: err?.message || 'Failed to start Local TTS service' },
+      400
+    );
+  }
+});
+
+app.post('/api/tts/stop', (c) => {
+  const status = stopLocalTtsService();
+  return c.json({ ok: true, ...status });
+});
+
+app.post('/api/tts/logs/clear', async (c) => {
+  clearLocalTtsLogs();
+  const status = await getLocalTtsStatus();
+  return c.json({ ok: true, ...status });
 });
 
 // ==================== SLIDES (SQLite) ====================

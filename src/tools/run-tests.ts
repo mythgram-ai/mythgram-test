@@ -22,10 +22,12 @@ import { testMemorySearchTool } from './memory_search/memory_search.test.js';
 import { testKnowledgeSearchTool } from './knowledge_search/knowledge_search.test.js';
 import { testFatchWebUrlsTool } from './fatch_web_urls/fatch_web_urls.test.js';
 import { testGithubRepositorySearchTool } from './github_repository_search/github_repository_search.test.js';
+import { testGenerateSpeechTool } from './generate_speech/generate_speech.test.js';
 import { testMemorySystem } from '../memory/memory.test.js';
 import { testKnowledgeSystem } from '../knowledge/knowledge.test.js';
 import { testScraperSystem } from '../scraper/scraper.test.js';
 import { testWebSearchSystem } from '../web-search/web-search.test.js';
+import { testTtsSystem } from '../tts/tts.test.js';
 import {
   ALL_TOOLS,
   SUB_AGENT_ALLOWED_TOOLS,
@@ -47,10 +49,10 @@ async function testNewToolsSuite() {
     visionSupport: true,
   };
 
-  // Verify total count of tools (40 previous + 6 search/memory tools = 46)
-  assert.equal(ALL_TOOLS.length, 46, 'Expected 46 total native tools');
+  // Verify total count of tools (40 previous + 6 search/memory tools + 1 generate_speech = 47)
+  assert.equal(ALL_TOOLS.length, 47, 'Expected 47 total native tools');
   const openAiDefs = getOpenAIToolsList(true);
-  assert.equal(openAiDefs.length, 46);
+  assert.equal(openAiDefs.length, 47);
 
   // Verify sub-agent restricted tools are excluded
   const subAgentDefs = getSubAgentOpenAIToolsList();
@@ -318,7 +320,9 @@ async function runAll() {
   await testKnowledgeSearchTool();
   await testFatchWebUrlsTool();
   await testGithubRepositorySearchTool();
-  console.log('All 46 Mythgram Native Tools Passed Tests!');
+  await testTtsSystem();
+  await testGenerateSpeechTool();
+  console.log('All 47 Mythgram Native Tools Passed Tests!');
 }
 
 runAll().catch((err) => {

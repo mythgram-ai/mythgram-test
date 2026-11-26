@@ -66,6 +66,7 @@ export const DEFAULT_ALLOWED_SUB_AGENT_TOOLS: string[] = [
   'web_search',
   'image_search',
   'fatch_web_urls',
+  'generate_speech',
 ];
 
 export const DEFAULT_SUB_AGENTS: SubAgentDefinition[] = [

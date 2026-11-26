@@ -26,6 +26,8 @@ export interface MythgramPaths {
   knowledgeJsonPath: string;
   webSearchDir: string;
   webSearchJsonPath: string;
+  ttsDir: string;
+  ttsJsonPath: string;
 }
 
 let cachedPaths: MythgramPaths | null = null;
@@ -50,6 +52,7 @@ export function ensureDataDirIntegrity(paths: MythgramPaths): MythgramPaths {
     paths.memoryDir,
     paths.knowledgeDir,
     paths.webSearchDir,
+    paths.ttsDir,
   ];
 
   for (const dir of dirs) {
@@ -124,6 +127,9 @@ export function initDataDir(
   const webSearchDir = path.join(dataDir, 'web-search');
   const webSearchJsonPath = path.join(webSearchDir, 'web-search.json');
 
+  const ttsDir = path.join(dataDir, 'tts');
+  const ttsJsonPath = path.join(ttsDir, 'tts.json');
+
   cachedPaths = {
     baseDir: resolvedBase,
     dataDir,
@@ -149,6 +155,8 @@ export function initDataDir(
     knowledgeJsonPath,
     webSearchDir,
     webSearchJsonPath,
+    ttsDir,
+    ttsJsonPath,
   };
 
   return ensureDataDirIntegrity(cachedPaths);
