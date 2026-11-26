@@ -529,9 +529,7 @@ export const App: React.FC = () => {
             onClick={navigateToHome}
           >
             <span className="brand-mark" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 10.2L7.5 5.7C6.8 6.4 6.4 7.2 6.2 8.2L10 12L6.2 15.8C6.4 16.8 6.8 17.6 7.5 18.3L12 13.8L16.5 18.3C17.2 17.6 17.6 16.8 17.8 15.8L14 12L17.8 8.2C17.6 7.2 17.2 6.4 16.5 5.7L12 10.2Z" />
-              </svg>
+              <img src="/logo.svg" alt="" />
             </span>
             <span className="brand-name">Mythgram</span>
           </button>
