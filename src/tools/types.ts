@@ -46,7 +46,9 @@ export function toOpenAIToolDefinition(tool: MythgramTool<any>): {
   };
 } {
   const rawJsonSchema: any = zodToJsonSchema(tool.schema, {
-    target: 'openAi',
+    // jsonSchema7 keeps optional fields out of `required`. The openAi target turns every
+    // optional field into a required nullable one, which contradicts the tool contracts.
+    target: 'jsonSchema7',
     $refStrategy: 'none',
   });
   const { $schema, ...parameters } = rawJsonSchema;

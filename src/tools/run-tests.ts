@@ -26,6 +26,7 @@ import { testGenerateSpeechTool } from './generate_speech/generate_speech.test.j
 import { testCreateCheckpointTool } from './create_checkpoint/create_checkpoint.test.js';
 import { testListCheckpointsTool } from './list_checkpoints/list_checkpoints.test.js';
 import { testRestoreCheckpointTool } from './restore_checkpoint/restore_checkpoint.test.js';
+import { testScheduleTools } from './schedule/schedule.test.js';
 import { testCheckpointSystem } from '../checkpoint/checkpoint.test.js';
 import { testMemorySystem } from '../memory/memory.test.js';
 import { testKnowledgeSystem } from '../knowledge/knowledge.test.js';
@@ -54,10 +55,10 @@ async function testNewToolsSuite() {
     visionSupport: true,
   };
 
-  // Verify total count of tools (47 previous + 3 checkpoint tools = 50)
-  assert.equal(ALL_TOOLS.length, 50, 'Expected 50 total native tools');
+  // Verify total count of tools (50 previous + 5 schedule tools = 55)
+  assert.equal(ALL_TOOLS.length, 55, 'Expected 55 total native tools');
   const openAiDefs = getOpenAIToolsList(true);
-  assert.equal(openAiDefs.length, 50);
+  assert.equal(openAiDefs.length, 55);
 
   // Verify sub-agent restricted tools are excluded
   const subAgentDefs = getSubAgentOpenAIToolsList();
@@ -330,10 +331,11 @@ async function runAll() {
   await testCreateCheckpointTool();
   await testListCheckpointsTool();
   await testRestoreCheckpointTool();
+  await testScheduleTools();
   await testCheckpointSystem();
   await testAcpServer();
   await testAcpPromptTurn();
-  console.log('All 50 Mythgram Native Tools Passed Tests!');
+  console.log('All 55 Mythgram Native Tools Passed Tests!');
 }
 
 runAll().catch((err) => {

@@ -109,6 +109,8 @@ Open **Automation** in the sidebar or visit `/automation`.
 
 Each run creates a normal chat session, so scheduled chats appear in the sidebar and can be reopened at any time. The card menu provides **Run now**, **Stop**, **Edit**, **Duplicate**, **Pause/Resume**, **History**, **Copy webhook URL**, **Send test event**, **Rotate secret**, and **Delete**.
 
+The agent can also schedule its own work. Ask it to "run this every Monday at 9" and it calls `schedule_create`; `schedule_list`, `schedule_get`, `schedule_run_now`, and `schedule_delete` let it manage what it created. New runs inherit the current workspace, model, and agent persona, and appear on the same Automation page.
+
 ### Webhook API
 
 Every webhook schedule exposes one endpoint:

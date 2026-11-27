@@ -50,6 +50,11 @@ import { generateSpeechTool } from './generate_speech/generate_speech.js';
 import { createCheckpointTool } from './create_checkpoint/create_checkpoint.js';
 import { listCheckpointsTool } from './list_checkpoints/list_checkpoints.js';
 import { restoreCheckpointTool } from './restore_checkpoint/restore_checkpoint.js';
+import { scheduleCreateTool } from './schedule/schedule_create.js';
+import { scheduleListTool } from './schedule/schedule_list.js';
+import { scheduleGetTool } from './schedule/schedule_get.js';
+import { scheduleRunNowTool } from './schedule/schedule_run_now.js';
+import { scheduleDeleteTool } from './schedule/schedule_delete.js';
 import {
   executeMcpTool,
   getMcpOpenAIToolDefinitions,
@@ -114,6 +119,11 @@ export const ALL_TOOLS: MythgramTool<any>[] = [
   createCheckpointTool,
   listCheckpointsTool,
   restoreCheckpointTool,
+  scheduleCreateTool,
+  scheduleListTool,
+  scheduleGetTool,
+  scheduleRunNowTool,
+  scheduleDeleteTool,
 ];
 
 export const TOOLS_MAP = new Map<string, MythgramTool<any>>(

@@ -246,6 +246,12 @@ export function getToolIcon(toolName: string) {
       return <Terminal size={13} />;
     case 'wait':
       return <Clock size={13} />;
+    case 'schedule_create':
+    case 'schedule_list':
+    case 'schedule_get':
+    case 'schedule_run_now':
+    case 'schedule_delete':
+      return <Clock size={13} />;
     case 'save_artifacts':
     case 'list_artifacts':
     case 'show_artifact_to_user':
@@ -320,6 +326,16 @@ export function formatToolSummaryText(toolName: string, argsJson: string): strin
         return `shall_tool $ ${args.command || ''}`;
       case 'wait':
         return `wait ${args.seconds ?? 1}s`;
+      case 'schedule_create':
+        return `schedule_create "${args.schedule_name || ''}" (${args.cadence || ''})`;
+      case 'schedule_list':
+        return `schedule_list ${args.status || 'all'}`;
+      case 'schedule_get':
+        return `schedule_get ${args.schedule_id || ''}`;
+      case 'schedule_run_now':
+        return `schedule_run_now ${args.schedule_id || ''}`;
+      case 'schedule_delete':
+        return `schedule_delete ${args.schedule_id || ''}`;
       case 'save_artifacts':
         return `save_artifacts "${args.title || ''}" (${args.type || ''})`;
       case 'list_artifacts':
