@@ -11,6 +11,8 @@ export interface SessionRow {
   context_tokens: number;
   created_at: number;
   updated_at: number;
+  schedule_id?: string | null;
+  origin?: string | null;
 }
 
 export interface MessageRow {
@@ -133,6 +135,8 @@ class MythgramDatabase {
         model_id TEXT NOT NULL,
         status TEXT NOT NULL DEFAULT 'idle',
         context_tokens INTEGER NOT NULL DEFAULT 0,
+        schedule_id TEXT,
+        origin TEXT,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       );
@@ -219,6 +223,22 @@ class MythgramDatabase {
         updated_at INTEGER NOT NULL
       );
     `);
+
+    // Forward-compatible migrations for databases created by earlier versions.
+    try {
+      const columns = this.db.prepare(`PRAGMA table_info(sessions)`).all() as {
+        name: string;
+      }[];
+      const hasColumn = (name: string) => columns.some((c) => c.name === name);
+      if (!hasColumn('schedule_id')) {
+        this.db.exec(`ALTER TABLE sessions ADD COLUMN schedule_id TEXT`);
+      }
+      if (!hasColumn('origin')) {
+        this.db.exec(`ALTER TABLE sessions ADD COLUMN origin TEXT`);
+      }
+    } catch (err) {
+      console.error('[DB] Session column migration failed:', err);
+    }
   }
 
   public setStreamActive(sessionOrRunId: string, active: boolean) {
@@ -430,8 +450,8 @@ class MythgramDatabase {
 
   public createSession(session: SessionRow): SessionRow {
     const stmt = this.db.prepare(`
-      INSERT INTO sessions (id, title, workspace, provider_id, model_id, status, context_tokens, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO sessions (id, title, workspace, provider_id, model_id, status, context_tokens, schedule_id, origin, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     stmt.run(
       session.id,
@@ -441,6 +461,8 @@ class MythgramDatabase {
       session.model_id,
       session.status,
       session.context_tokens,
+      session.schedule_id ?? null,
+      session.origin ?? null,
       session.created_at,
       session.updated_at
     );

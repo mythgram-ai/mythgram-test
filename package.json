@@ -7,7 +7,17 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "build": "tsc --noEmit",
-    "test": "tsx src/tools/run-tests.ts"
+    "test": "tsx src/tools/run-tests.ts",
+    "daemon": "tsx src/deamon/index.ts",
+    "daemon:start": "tsx src/deamon/index.ts start",
+    "daemon:stop": "tsx src/deamon/index.ts stop",
+    "daemon:restart": "tsx src/deamon/index.ts restart",
+    "daemon:status": "tsx src/deamon/index.ts status",
+    "daemon:logs": "tsx src/deamon/index.ts logs",
+    "daemon:ensure": "tsx src/deamon/index.ts ensure",
+    "daemon:doctor": "tsx src/deamon/index.ts doctor",
+    "daemon:install": "tsx src/deamon/index.ts install",
+    "daemon:uninstall": "tsx src/deamon/index.ts uninstall"
   },
   "dependencies": {
     "@agentclientprotocol/sdk": "^2.12.0",
@@ -37,6 +47,7 @@
     "typescript-language-server": "^4.4.1"
   },
   "bin": {
-    "mythgram": "bin/mythgram.mjs"
+    "mythgram": "bin/mythgram.mjs",
+    "mythgram-daemon": "bin/mythgram-daemon.mjs"
   }
 }

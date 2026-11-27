@@ -36,6 +36,8 @@ export function createNewSession(params: {
   workspace?: string;
   providerId?: string;
   modelId?: string;
+  scheduleId?: string;
+  origin?: string;
 }): SessionRow {
   const id =
     params.sessionId && params.sessionId.length === 30
@@ -62,6 +64,8 @@ export function createNewSession(params: {
     context_tokens: 0,
     created_at: now,
     updated_at: now,
+    schedule_id: params.scheduleId ?? null,
+    origin: params.origin ?? null,
   });
 }
 

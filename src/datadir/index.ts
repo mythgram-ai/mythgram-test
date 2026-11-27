@@ -28,6 +28,10 @@ export interface MythgramPaths {
   webSearchJsonPath: string;
   ttsDir: string;
   ttsJsonPath: string;
+  cronDir: string;
+  cronSchedulesJsonPath: string;
+  cronRunsJsonPath: string;
+  deamonDir: string;
 }
 
 let cachedPaths: MythgramPaths | null = null;
@@ -53,6 +57,8 @@ export function ensureDataDirIntegrity(paths: MythgramPaths): MythgramPaths {
     paths.knowledgeDir,
     paths.webSearchDir,
     paths.ttsDir,
+    paths.cronDir,
+    paths.deamonDir,
   ];
 
   for (const dir of dirs) {
@@ -73,6 +79,8 @@ export function ensureDataDirIntegrity(paths: MythgramPaths): MythgramPaths {
     paths.mcpServersJsonPath,
     paths.memoryJsonPath,
     paths.knowledgeJsonPath,
+    paths.cronSchedulesJsonPath,
+    paths.cronRunsJsonPath,
   ]) {
     try {
       if (!fs.existsSync(jsonPath)) {
@@ -130,6 +138,12 @@ export function initDataDir(
   const ttsDir = path.join(dataDir, 'tts');
   const ttsJsonPath = path.join(ttsDir, 'tts.json');
 
+  const cronDir = path.join(dataDir, 'cron');
+  const cronSchedulesJsonPath = path.join(cronDir, 'schedules.json');
+  const cronRunsJsonPath = path.join(cronDir, 'runs.json');
+
+  const deamonDir = path.join(dataDir, 'deamon');
+
   cachedPaths = {
     baseDir: resolvedBase,
     dataDir,
@@ -157,6 +171,10 @@ export function initDataDir(
     webSearchJsonPath,
     ttsDir,
     ttsJsonPath,
+    cronDir,
+    cronSchedulesJsonPath,
+    cronRunsJsonPath,
+    deamonDir,
   };
 
   return ensureDataDirIntegrity(cachedPaths);

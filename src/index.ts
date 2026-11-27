@@ -123,6 +123,31 @@ import {
   getAcpSettingsPayload,
   setConfiguredAcpAgentId,
 } from './acp/settings.js';
+import {
+  ensureCronStore,
+  startCronEngine,
+  listSchedules,
+  getSchedule,
+  createSchedule,
+  updateSchedule,
+  deleteSchedule,
+  runScheduleNow,
+  stopSchedule,
+  duplicateSchedule,
+  setScheduleEnabled,
+  getScheduleRuns,
+  getScheduleRun,
+  previewScheduleInput,
+  rotateWebhookCredentials,
+  handleWebhookByToken,
+  simulateWebhook,
+  getCronEngineStatus,
+  isScheduleRunning,
+  webhookSecretPreview,
+  getTimezoneList,
+  webhookPublicView,
+} from './cron/index.js';
+import type { ScheduleDefinition } from './cron/index.js';
 
 // Initialize .mythgram datadir and stores immediately on startup
 initDataDir();
@@ -134,8 +159,12 @@ void ensureMemoryStore();
 void ensureKnowledgeStore();
 void ensureMcpStore();
 void ensureTtsStore();
+void ensureCronStore();
 void initializeMcp();
 void refreshConnectorToolCache();
+void startCronEngine().catch((err) => {
+  console.error('[Cron] Failed to start automation engine:', err);
+});
 
 const app = new Hono();
 app.use('*', cors());
@@ -634,6 +663,248 @@ app.get('/api/custom-agents/:id/logo', async (c) => {
     'X-Content-Type-Options': 'nosniff',
     'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
   });
+});
+
+// ==================== AUTOMATION / SCHEDULES (src/cron) ====================
+function schedulePublicView(schedule: ScheduleDefinition) {
+  const { webhook, ...rest } = schedule;
+  return {
+    ...rest,
+    isRunning: isScheduleRunning(schedule.id),
+    webhook: webhook ? webhookPublicView(webhook) : undefined,
+    webhook_secret_preview: webhookSecretPreview(schedule),
+  };
+}
+
+function requestClientIp(c: any): string {
+  const forwarded = c.req.header('x-forwarded-for') || '';
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return c.req.header('x-real-ip') || c.req.header('cf-connecting-ip') || '';
+}
+
+function requestHeaders(c: any): Record<string, string> {
+  const headers: Record<string, string> = {};
+  c.req.raw.headers.forEach((value: string, key: string) => {
+    headers[key.toLowerCase()] = value;
+  });
+  return headers;
+}
+
+function requestQuery(c: any): Record<string, string> {
+  const query: Record<string, string> = {};
+  for (const [key, value] of Object.entries(c.req.query())) {
+    query[key] = String(value);
+  }
+  return query;
+}
+
+app.get('/api/automation', async (c) => {
+  const schedules = await listSchedules();
+  return c.json({
+    ok: true,
+    schedules: schedules.map(schedulePublicView),
+    engine: getCronEngineStatus(),
+  });
+});
+
+app.get('/api/automation/timezones', (c) => {
+  let systemTimezone = 'UTC';
+  try {
+    systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    // ignore
+  }
+  return c.json({ ok: true, timezones: getTimezoneList(), systemTimezone });
+});
+
+app.post('/api/automation/validate', async (c) => {
+  const body = await c.req.json();
+  const preview = previewScheduleInput(body);
+  return c.json({ ok: true, ...preview });
+});
+
+app.get('/api/automation/runs/:runId', async (c) => {
+  const run = await getScheduleRun(c.req.param('runId'));
+  if (!run) return c.json({ ok: false, error: 'Run not found.' }, 404);
+  return c.json({ ok: true, run });
+});
+
+app.get('/api/automation/:id', async (c) => {
+  const schedule = await getSchedule(c.req.param('id'));
+  if (!schedule) return c.json({ ok: false, error: 'Schedule not found.' }, 404);
+  return c.json({ ok: true, schedule: schedulePublicView(schedule) });
+});
+
+app.post('/api/automation', async (c) => {
+  try {
+    const body = await c.req.json();
+    const created = await createSchedule(body);
+    return c.json(
+      {
+        ok: true,
+        schedule: schedulePublicView(created),
+        webhook_secret: created.webhook?.secret ?? null,
+      },
+      201
+    );
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to create schedule.' }, 400);
+  }
+});
+
+app.patch('/api/automation/:id', async (c) => {
+  try {
+    const body = await c.req.json();
+    const updated = await updateSchedule(c.req.param('id'), body);
+    return c.json({ ok: true, schedule: schedulePublicView(updated) });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to update schedule.' }, 400);
+  }
+});
+
+app.put('/api/automation/:id', async (c) => {
+  try {
+    const body = await c.req.json();
+    const updated = await updateSchedule(c.req.param('id'), body);
+    return c.json({ ok: true, schedule: schedulePublicView(updated) });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to update schedule.' }, 400);
+  }
+});
+
+app.delete('/api/automation/:id', async (c) => {
+  const deleted = await deleteSchedule(c.req.param('id'));
+  if (!deleted) return c.json({ ok: false, error: 'Schedule not found.' }, 404);
+  return c.json({ ok: true });
+});
+
+app.post('/api/automation/:id/run', async (c) => {
+  try {
+    const run = await runScheduleNow(c.req.param('id'));
+    const schedule = await getSchedule(c.req.param('id'));
+    return c.json({
+      ok: true,
+      run,
+      schedule: schedule ? schedulePublicView(schedule) : null,
+    });
+  } catch (err: any) {
+    const message = err?.message || 'Failed to run schedule.';
+    return c.json({ ok: false, error: message }, /already running/i.test(message) ? 409 : 400);
+  }
+});
+
+app.post('/api/automation/:id/stop', async (c) => {
+  const stopped = stopSchedule(c.req.param('id'));
+  const schedule = await getSchedule(c.req.param('id'));
+  return c.json({
+    ok: true,
+    stopped,
+    schedule: schedule ? schedulePublicView(schedule) : null,
+  });
+});
+
+app.post('/api/automation/:id/duplicate', async (c) => {
+  try {
+    const copy = await duplicateSchedule(c.req.param('id'));
+    return c.json({ ok: true, schedule: schedulePublicView(copy) }, 201);
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to duplicate schedule.' }, 400);
+  }
+});
+
+app.post('/api/automation/:id/pause', async (c) => {
+  try {
+    const schedule = await setScheduleEnabled(c.req.param('id'), false);
+    return c.json({ ok: true, schedule: schedulePublicView(schedule) });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to pause schedule.' }, 400);
+  }
+});
+
+app.post('/api/automation/:id/resume', async (c) => {
+  try {
+    const schedule = await setScheduleEnabled(c.req.param('id'), true);
+    return c.json({ ok: true, schedule: schedulePublicView(schedule) });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to resume schedule.' }, 400);
+  }
+});
+
+app.get('/api/automation/:id/runs', async (c) => {
+  const limit = Math.min(200, Math.max(1, Number(c.req.query('limit') || 50)));
+  const runs = await getScheduleRuns(c.req.param('id'), limit);
+  return c.json({ ok: true, runs });
+});
+
+app.post('/api/automation/:id/rotate-secret', async (c) => {
+  try {
+    const rotated = await rotateWebhookCredentials(c.req.param('id'));
+    return c.json({
+      ok: true,
+      schedule: schedulePublicView(rotated.schedule),
+      webhook_secret: rotated.secret,
+      webhook_token: rotated.token,
+    });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to rotate secret.' }, 400);
+  }
+});
+
+app.post('/api/automation/:id/test', async (c) => {
+  try {
+    let payload: unknown = { type: 'test', message: 'Mythgram webhook test event' };
+    try {
+      const body = await c.req.json();
+      if (body && typeof body === 'object' && body.payload !== undefined) {
+        payload = body.payload;
+      } else if (body && Object.keys(body).length > 0) {
+        payload = body;
+      }
+    } catch {
+      // empty body uses the default test payload
+    }
+    const run = await simulateWebhook(c.req.param('id'), payload);
+    return c.json({ ok: true, run });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to test webhook.' }, 400);
+  }
+});
+
+app.get('/api/cron/status', (c) => {
+  return c.json({ ok: true, engine: getCronEngineStatus() });
+});
+
+// Public webhook receiver. The unguessable token in the path is the endpoint identity.
+const MAX_WEBHOOK_REQUEST_BYTES = 10 * 1024 * 1024;
+
+app.post('/api/cron/webhook/:token', async (c) => {
+  const declared = Number(c.req.header('content-length') || 0);
+  if (Number.isFinite(declared) && declared > MAX_WEBHOOK_REQUEST_BYTES) {
+    return c.json({ ok: false, error: 'Payload too large.' }, 413);
+  }
+  const rawBody = await c.req.text();
+  if (Buffer.byteLength(rawBody, 'utf-8') > MAX_WEBHOOK_REQUEST_BYTES) {
+    return c.json({ ok: false, error: 'Payload too large.' }, 413);
+  }
+  const result = await handleWebhookByToken(c.req.param('token'), {
+    rawBody,
+    headers: requestHeaders(c),
+    ip: requestClientIp(c),
+    method: 'POST',
+    query: requestQuery(c),
+  });
+  return c.json(result.body, result.statusCode as any);
+});
+
+app.get('/api/cron/webhook/:token', async (c) => {
+  const result = await handleWebhookByToken(c.req.param('token'), {
+    rawBody: '',
+    headers: requestHeaders(c),
+    ip: requestClientIp(c),
+    method: 'GET',
+    query: requestQuery(c),
+  });
+  return c.json(result.body, result.statusCode as any);
 });
 
 // ==================== ACP (AGENT CLIENT PROTOCOL) ====================

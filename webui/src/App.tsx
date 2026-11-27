@@ -21,6 +21,7 @@ import {
   Volume2,
   Image,
   Terminal,
+  CalendarClock,
 } from 'lucide-react';
 import { HomePage } from './pages/HomePage';
 import type { ProviderState } from './components/SettingsModal';
@@ -68,6 +69,9 @@ const MediaGenerationPage = lazy(() =>
 const AcpPage = lazy(() =>
   import('./pages/AcpPage').then((m) => ({ default: m.AcpPage }))
 );
+const AutomationPage = lazy(() =>
+  import('./pages/AutomationPage').then((m) => ({ default: m.AutomationPage }))
+);
 const SettingsModal = lazy(() =>
   import('./components/SettingsModal').then((m) => ({ default: m.SettingsModal }))
 );
@@ -114,6 +118,9 @@ const preloadMediaGenerationPage = () => {
 const preloadAcpPage = () => {
   void import('./pages/AcpPage');
 };
+const preloadAutomationPage = () => {
+  void import('./pages/AutomationPage');
+};
 
 type ActivePageType =
   | 'home'
@@ -129,7 +136,8 @@ type ActivePageType =
   | 'connectors'
   | 'tts'
   | 'mediageneration'
-  | 'acp';
+  | 'acp'
+  | 'automation';
 
 interface SessionSummary {
   id: string;
@@ -139,6 +147,8 @@ interface SessionSummary {
   model_id: string;
   status: string;
   isRunning?: boolean;
+  schedule_id?: string | null;
+  origin?: string | null;
   created_at: number;
   updated_at: number;
 }
@@ -169,6 +179,13 @@ function parsePageFromLocation(loc: Location): ActivePageType {
     return 'mediageneration';
   }
   if (loc.pathname.startsWith('/acp')) return 'acp';
+  if (
+    loc.pathname.startsWith('/automation') ||
+    loc.pathname.startsWith('/schedules') ||
+    loc.pathname.startsWith('/cron')
+  ) {
+    return 'automation';
+  }
   return 'home';
 }
 
@@ -579,6 +596,18 @@ export const App: React.FC = () => {
       );
     }
 
+    if (activePage === 'automation') {
+      return (
+        <Suspense fallback={<PageSkeleton />}>
+          <AutomationPage
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
+            onOpenSession={navigateToSession}
+          />
+        </Suspense>
+      );
+    }
+
     return (
       <HomePage
         workspace={defaultWorkspace}
@@ -732,6 +761,17 @@ export const App: React.FC = () => {
 
           <button
             type="button"
+            className={`nav-link ${activePage === 'automation' ? 'is-active' : ''}`}
+            title="Automation"
+            onPointerEnter={preloadAutomationPage}
+            onClick={() => navigateToPage('automation', '/automation')}
+          >
+            <CalendarClock size={14} style={{ flexShrink: 0 }} />
+            <span className="nav-label">Automation</span>
+          </button>
+
+          <button
+            type="button"
             className={`nav-link ${activePage === 'skills' ? 'is-active' : ''}`}
             title="Skills"
             onPointerEnter={preloadSkillsPage}
@@ -862,6 +902,13 @@ export const App: React.FC = () => {
                         title="Running in background"
                       />
                     )}
+                    {s.schedule_id && (
+                      <CalendarClock
+                        size={11}
+                        className="session-schedule-icon"
+                        aria-label="Scheduled chat"
+                      />
+                    )}
                     <span className="list-item-label">{s.title}</span>
                     <Trash2
                       size={12}
@@ -888,6 +935,13 @@ export const App: React.FC = () => {
                     onPointerEnter={preloadChatPage}
                   >
                     {s.isRunning && <span className="running-dot" />}
+                    {s.schedule_id && (
+                      <CalendarClock
+                        size={11}
+                        className="session-schedule-icon"
+                        aria-label="Scheduled chat"
+                      />
+                    )}
                     <span className="list-item-label">{s.title}</span>
                     <Trash2
                       size={12}
@@ -914,6 +968,13 @@ export const App: React.FC = () => {
                     onPointerEnter={preloadChatPage}
                   >
                     {s.isRunning && <span className="running-dot" />}
+                    {s.schedule_id && (
+                      <CalendarClock
+                        size={11}
+                        className="session-schedule-icon"
+                        aria-label="Scheduled chat"
+                      />
+                    )}
                     <span className="list-item-label">{s.title}</span>
                     <Trash2
                       size={12}
