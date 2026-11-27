@@ -47,6 +47,9 @@ import { webSearchTool } from './web_search/web_search.js';
 import { imageSearchTool } from './image_search/image_search.js';
 import { fatchWebUrlsTool } from './fatch_web_urls/fatch_web_urls.js';
 import { generateSpeechTool } from './generate_speech/generate_speech.js';
+import { createCheckpointTool } from './create_checkpoint/create_checkpoint.js';
+import { listCheckpointsTool } from './list_checkpoints/list_checkpoints.js';
+import { restoreCheckpointTool } from './restore_checkpoint/restore_checkpoint.js';
 import {
   executeMcpTool,
   getMcpOpenAIToolDefinitions,
@@ -108,6 +111,9 @@ export const ALL_TOOLS: MythgramTool<any>[] = [
   imageSearchTool,
   fatchWebUrlsTool,
   generateSpeechTool,
+  createCheckpointTool,
+  listCheckpointsTool,
+  restoreCheckpointTool,
 ];
 
 export const TOOLS_MAP = new Map<string, MythgramTool<any>>(

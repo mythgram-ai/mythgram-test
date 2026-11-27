@@ -2972,6 +2972,32 @@ pre {
   background: #0c0c0f;
 }
 
+.checkpoint-view-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 2px 4px 6px;
+}
+
+.checkpoint-view-tabs .topbar-btn {
+  flex: 1 1 0;
+  width: auto;
+  height: 30px;
+  min-width: 0;
+  padding: 0 10px;
+  font-size: 11.5px;
+}
+
+.checkpoint-view-tabs .topbar-btn > span {
+  display: inline;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkpoint-create-btn {
+  padding: 5px 11px;
+  font-size: 12px;
+}
+
 .resource-search {
   display: flex;
   align-items: center;
@@ -3657,8 +3683,45 @@ pre {
     flex-direction: column;
   }
 
+  .checkpoints-page .app-topbar-brand .version-block {
+    display: none;
+  }
+
+  .checkpoints-page .topbar-left {
+    min-width: 0;
+  }
+
+  .checkpoints-page .topbar-right {
+    flex-shrink: 0;
+    gap: 6px;
+  }
+
+  .checkpoints-page .topbar-btn,
+  .checkpoints-page .checkpoint-create-btn {
+    flex-shrink: 0;
+  }
+
+  .checkpoints-page .app-topbar-brand > span:not(.version-block) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
   .zapier-notice {
     margin: 10px 10px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkpoints-page .topbar-right .checkpoint-create-btn {
+    width: var(--tap-size);
+    height: var(--tap-size);
+    min-height: var(--tap-size);
+    padding: 0;
+  }
+
+  .checkpoints-page .topbar-right .checkpoint-create-btn .btn-label {
+    display: none;
   }
 }
 

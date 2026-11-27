@@ -22,6 +22,7 @@ import {
   Image,
   Terminal,
   CalendarClock,
+  History,
 } from 'lucide-react';
 import { HomePage } from './pages/HomePage';
 import type { ProviderState } from './components/SettingsModal';
@@ -72,6 +73,9 @@ const AcpPage = lazy(() =>
 const AutomationPage = lazy(() =>
   import('./pages/AutomationPage').then((m) => ({ default: m.AutomationPage }))
 );
+const CheckpointsPage = lazy(() =>
+  import('./pages/CheckpointsPage').then((m) => ({ default: m.CheckpointsPage }))
+);
 const SettingsModal = lazy(() =>
   import('./components/SettingsModal').then((m) => ({ default: m.SettingsModal }))
 );
@@ -121,6 +125,9 @@ const preloadAcpPage = () => {
 const preloadAutomationPage = () => {
   void import('./pages/AutomationPage');
 };
+const preloadCheckpointsPage = () => {
+  void import('./pages/CheckpointsPage');
+};
 
 type ActivePageType =
   | 'home'
@@ -137,7 +144,8 @@ type ActivePageType =
   | 'tts'
   | 'mediageneration'
   | 'acp'
-  | 'automation';
+  | 'automation'
+  | 'checkpoints';
 
 interface SessionSummary {
   id: string;
@@ -186,6 +194,7 @@ function parsePageFromLocation(loc: Location): ActivePageType {
   ) {
     return 'automation';
   }
+  if (loc.pathname.startsWith('/checkpoints')) return 'checkpoints';
   return 'home';
 }
 
@@ -608,6 +617,17 @@ export const App: React.FC = () => {
       );
     }
 
+    if (activePage === 'checkpoints') {
+      return (
+        <Suspense fallback={<PageSkeleton />}>
+          <CheckpointsPage
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
+          />
+        </Suspense>
+      );
+    }
+
     return (
       <HomePage
         workspace={defaultWorkspace}
@@ -768,6 +788,17 @@ export const App: React.FC = () => {
           >
             <CalendarClock size={14} style={{ flexShrink: 0 }} />
             <span className="nav-label">Automation</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-link ${activePage === 'checkpoints' ? 'is-active' : ''}`}
+            title="Checkpoints"
+            onPointerEnter={preloadCheckpointsPage}
+            onClick={() => navigateToPage('checkpoints', '/checkpoints')}
+          >
+            <History size={14} style={{ flexShrink: 0 }} />
+            <span className="nav-label">Checkpoints</span>
           </button>
 
           <button

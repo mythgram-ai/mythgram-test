@@ -32,6 +32,7 @@ export const RESTRICTED_SUB_AGENT_TOOLS = new Set<string>([
   'connect_remote_mcp',
   'list_available_application_connectors',
   'connect_applications_connectors',
+  'restore_checkpoint',
 ]);
 
 export const DEFAULT_ALLOWED_SUB_AGENT_TOOLS: string[] = [

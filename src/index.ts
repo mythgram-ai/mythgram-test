@@ -61,6 +61,18 @@ import {
   ensureSkillsStore,
 } from './skills/index.js';
 import {
+  ensureCheckpointStore,
+  listCheckpoints,
+  getCheckpoint,
+  createCheckpoint,
+  updateCheckpoint,
+  deleteCheckpoint,
+  restoreCheckpoint,
+  listBackups,
+  deleteBackup,
+  restoreBackup,
+} from './checkpoint/index.js';
+import {
   listMemoryEntries,
   getMemoryEntry,
   createMemoryEntry,
@@ -155,6 +167,7 @@ void ensureArtifactsStore();
 void ensureSubAgentsStore();
 void ensureCustomAgentsStore();
 void ensureSkillsStore();
+void ensureCheckpointStore();
 void ensureMemoryStore();
 void ensureKnowledgeStore();
 void ensureMcpStore();
@@ -1147,6 +1160,127 @@ app.delete('/api/skills/:name', async (c) => {
   const deleted = await deleteSkill(name);
   const skills = await listSkills();
   return c.json({ ok: deleted, skills });
+});
+
+// ==================== CHECKPOINTS (.mythgram/checkpoints) ====================
+app.get('/api/checkpoints', async (c) => {
+  const [checkpoints, backups] = await Promise.all([listCheckpoints(), listBackups()]);
+  const paths = getDataDir();
+  return c.json({
+    ok: true,
+    checkpoints_dir: paths.checkpointsDir,
+    backups_dir: paths.checkpointsBackupDir,
+    workspace: getDefaultWorkspace(),
+    checkpoints,
+    backups,
+  });
+});
+
+app.post('/api/checkpoints', async (c) => {
+  try {
+    const body = await c.req.json();
+    const checkpoint = await createCheckpoint({
+      workspace: String(body.workspace || getDefaultWorkspace()),
+      name: body.name ? String(body.name) : undefined,
+      description: body.description ? String(body.description) : undefined,
+    });
+    const checkpoints = await listCheckpoints();
+    return c.json({ ok: true, checkpoint, checkpoints });
+  } catch (err: any) {
+    return c.json(
+      { ok: false, error: err?.message || 'Failed to create checkpoint' },
+      400
+    );
+  }
+});
+
+app.get('/api/checkpoints/backups', async (c) => {
+  const backups = await listBackups();
+  return c.json({ ok: true, backups_dir: getDataDir().checkpointsBackupDir, backups });
+});
+
+app.get('/api/checkpoints/backups/:file/download', async (c) => {
+  const fileName = c.req.param('file');
+  const backup = (await listBackups()).find((item) => item.file === fileName);
+  if (!backup) return c.json({ ok: false, error: 'Backup not found' }, 404);
+  const buf = await fs.readFile(backup.file_path);
+  return new Response(buf, {
+    headers: {
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(backup.file)}"`,
+    },
+  });
+});
+
+app.post('/api/checkpoints/backups/:file/restore', async (c) => {
+  try {
+    const body = await c.req.json().catch(() => ({}));
+    const result = await restoreBackup({
+      workspace: String(body.workspace || getDefaultWorkspace()),
+      backupFile: c.req.param('file'),
+    });
+    return c.json({ ok: true, result });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to restore backup' }, 400);
+  }
+});
+
+app.delete('/api/checkpoints/backups/:file', async (c) => {
+  try {
+    const deleted = await deleteBackup(c.req.param('file'));
+    const backups = await listBackups();
+    return c.json({ ok: deleted, backups });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to delete backup' }, 400);
+  }
+});
+
+app.get('/api/checkpoints/:id/download', async (c) => {
+  const checkpoint = await getCheckpoint(c.req.param('id'));
+  if (!checkpoint) return c.json({ ok: false, error: 'Checkpoint not found' }, 404);
+  const buf = await fs.readFile(checkpoint.file_path);
+  return new Response(buf, {
+    headers: {
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(checkpoint.file)}"`,
+    },
+  });
+});
+
+app.post('/api/checkpoints/:id/restore', async (c) => {
+  try {
+    const body = await c.req.json().catch(() => ({}));
+    const result = await restoreCheckpoint({
+      workspace: String(body.workspace || getDefaultWorkspace()),
+      checkpointId: c.req.param('id'),
+    });
+    const [checkpoints, backups] = await Promise.all([listCheckpoints(), listBackups()]);
+    return c.json({ ok: true, result, checkpoints, backups });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to restore checkpoint' }, 400);
+  }
+});
+
+app.patch('/api/checkpoints/:id', async (c) => {
+  try {
+    const body = await c.req.json();
+    const checkpoint = await updateCheckpoint(c.req.param('id'), {
+      name: body.name !== undefined ? String(body.name) : undefined,
+      description:
+        body.description !== undefined ? String(body.description) : undefined,
+    });
+    if (!checkpoint) return c.json({ ok: false, error: 'Checkpoint not found' }, 404);
+    const checkpoints = await listCheckpoints();
+    return c.json({ ok: true, checkpoint, checkpoints });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to update checkpoint' }, 400);
+  }
+});
+
+app.delete('/api/checkpoints/:id', async (c) => {
+  const deleted = await deleteCheckpoint(c.req.param('id'));
+  const checkpoints = await listCheckpoints();
+  return c.json({ ok: deleted, checkpoints });
 });
 
 // ==================== MEMORY (.mythgram/memory) ====================

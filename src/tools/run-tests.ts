@@ -23,6 +23,10 @@ import { testKnowledgeSearchTool } from './knowledge_search/knowledge_search.tes
 import { testFatchWebUrlsTool } from './fatch_web_urls/fatch_web_urls.test.js';
 import { testGithubRepositorySearchTool } from './github_repository_search/github_repository_search.test.js';
 import { testGenerateSpeechTool } from './generate_speech/generate_speech.test.js';
+import { testCreateCheckpointTool } from './create_checkpoint/create_checkpoint.test.js';
+import { testListCheckpointsTool } from './list_checkpoints/list_checkpoints.test.js';
+import { testRestoreCheckpointTool } from './restore_checkpoint/restore_checkpoint.test.js';
+import { testCheckpointSystem } from '../checkpoint/checkpoint.test.js';
 import { testMemorySystem } from '../memory/memory.test.js';
 import { testKnowledgeSystem } from '../knowledge/knowledge.test.js';
 import { testScraperSystem } from '../scraper/scraper.test.js';
@@ -50,10 +54,10 @@ async function testNewToolsSuite() {
     visionSupport: true,
   };
 
-  // Verify total count of tools (40 previous + 6 search/memory tools + 1 generate_speech = 47)
-  assert.equal(ALL_TOOLS.length, 47, 'Expected 47 total native tools');
+  // Verify total count of tools (47 previous + 3 checkpoint tools = 50)
+  assert.equal(ALL_TOOLS.length, 50, 'Expected 50 total native tools');
   const openAiDefs = getOpenAIToolsList(true);
-  assert.equal(openAiDefs.length, 47);
+  assert.equal(openAiDefs.length, 50);
 
   // Verify sub-agent restricted tools are excluded
   const subAgentDefs = getSubAgentOpenAIToolsList();
@@ -323,9 +327,13 @@ async function runAll() {
   await testGithubRepositorySearchTool();
   await testTtsSystem();
   await testGenerateSpeechTool();
+  await testCreateCheckpointTool();
+  await testListCheckpointsTool();
+  await testRestoreCheckpointTool();
+  await testCheckpointSystem();
   await testAcpServer();
   await testAcpPromptTurn();
-  console.log('All 47 Mythgram Native Tools Passed Tests!');
+  console.log('All 50 Mythgram Native Tools Passed Tests!');
 }
 
 runAll().catch((err) => {

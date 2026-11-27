@@ -31,6 +31,9 @@ export interface MythgramPaths {
   cronDir: string;
   cronSchedulesJsonPath: string;
   cronRunsJsonPath: string;
+  checkpointsDir: string;
+  checkpointsBackupDir: string;
+  checkpointsJsonPath: string;
   deamonDir: string;
 }
 
@@ -58,6 +61,8 @@ export function ensureDataDirIntegrity(paths: MythgramPaths): MythgramPaths {
     paths.webSearchDir,
     paths.ttsDir,
     paths.cronDir,
+    paths.checkpointsDir,
+    paths.checkpointsBackupDir,
     paths.deamonDir,
   ];
 
@@ -81,6 +86,7 @@ export function ensureDataDirIntegrity(paths: MythgramPaths): MythgramPaths {
     paths.knowledgeJsonPath,
     paths.cronSchedulesJsonPath,
     paths.cronRunsJsonPath,
+    paths.checkpointsJsonPath,
   ]) {
     try {
       if (!fs.existsSync(jsonPath)) {
@@ -142,6 +148,10 @@ export function initDataDir(
   const cronSchedulesJsonPath = path.join(cronDir, 'schedules.json');
   const cronRunsJsonPath = path.join(cronDir, 'runs.json');
 
+  const checkpointsDir = path.join(dataDir, 'checkpoints');
+  const checkpointsBackupDir = path.join(checkpointsDir, 'backup');
+  const checkpointsJsonPath = path.join(checkpointsDir, 'checkpoints.json');
+
   const deamonDir = path.join(dataDir, 'deamon');
 
   cachedPaths = {
@@ -174,6 +184,9 @@ export function initDataDir(
     cronDir,
     cronSchedulesJsonPath,
     cronRunsJsonPath,
+    checkpointsDir,
+    checkpointsBackupDir,
+    checkpointsJsonPath,
     deamonDir,
   };
 
