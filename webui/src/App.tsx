@@ -20,6 +20,7 @@ import {
   Sparkles,
   Volume2,
   Image,
+  Terminal,
 } from 'lucide-react';
 import { HomePage } from './pages/HomePage';
 import type { ProviderState } from './components/SettingsModal';
@@ -64,6 +65,9 @@ const MediaGenerationPage = lazy(() =>
     default: m.MediaGenerationPage,
   }))
 );
+const AcpPage = lazy(() =>
+  import('./pages/AcpPage').then((m) => ({ default: m.AcpPage }))
+);
 const SettingsModal = lazy(() =>
   import('./components/SettingsModal').then((m) => ({ default: m.SettingsModal }))
 );
@@ -107,6 +111,9 @@ const preloadTtsPage = () => {
 const preloadMediaGenerationPage = () => {
   void import('./pages/MediaGenerationPage');
 };
+const preloadAcpPage = () => {
+  void import('./pages/AcpPage');
+};
 
 type ActivePageType =
   | 'home'
@@ -121,7 +128,8 @@ type ActivePageType =
   | 'mcp'
   | 'connectors'
   | 'tts'
-  | 'mediageneration';
+  | 'mediageneration'
+  | 'acp';
 
 interface SessionSummary {
   id: string;
@@ -160,6 +168,7 @@ function parsePageFromLocation(loc: Location): ActivePageType {
   if (loc.pathname.startsWith('/media-generation') || loc.pathname.startsWith('/media')) {
     return 'mediageneration';
   }
+  if (loc.pathname.startsWith('/acp')) return 'acp';
   return 'home';
 }
 
@@ -559,6 +568,17 @@ export const App: React.FC = () => {
       );
     }
 
+    if (activePage === 'acp') {
+      return (
+        <Suspense fallback={<PageSkeleton />}>
+          <AcpPage
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
+          />
+        </Suspense>
+      );
+    }
+
     return (
       <HomePage
         workspace={defaultWorkspace}
@@ -763,6 +783,17 @@ export const App: React.FC = () => {
           >
             <McpIcon size={14} style={{ flexShrink: 0 }} />
             <span className="nav-label">MCP</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-link ${activePage === 'acp' ? 'is-active' : ''}`}
+            title="ACP (Agent Client Protocol)"
+            onPointerEnter={preloadAcpPage}
+            onClick={() => navigateToPage('acp', '/acp')}
+          >
+            <Terminal size={14} style={{ flexShrink: 0 }} />
+            <span className="nav-label">ACP</span>
           </button>
 
           <button

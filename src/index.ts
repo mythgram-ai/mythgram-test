@@ -119,6 +119,10 @@ import {
   stopLocalTtsService,
   clearLocalTtsLogs,
 } from './tts/index.js';
+import {
+  getAcpSettingsPayload,
+  setConfiguredAcpAgentId,
+} from './acp/settings.js';
 
 // Initialize .mythgram datadir and stores immediately on startup
 initDataDir();
@@ -630,6 +634,23 @@ app.get('/api/custom-agents/:id/logo', async (c) => {
     'X-Content-Type-Options': 'nosniff',
     'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
   });
+});
+
+// ==================== ACP (AGENT CLIENT PROTOCOL) ====================
+app.get('/api/acp/settings', async (c) => {
+  return c.json(await getAcpSettingsPayload());
+});
+
+app.post('/api/acp/settings', async (c) => {
+  try {
+    const body = await c.req.json();
+    if (body.agentMode !== undefined) {
+      await setConfiguredAcpAgentId(body.agentMode ? String(body.agentMode) : null);
+    }
+    return c.json(await getAcpSettingsPayload());
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to save ACP settings' }, 400);
+  }
 });
 
 // ==================== MCP SERVERS (.mythgram/mcp) ====================

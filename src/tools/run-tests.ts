@@ -28,6 +28,7 @@ import { testKnowledgeSystem } from '../knowledge/knowledge.test.js';
 import { testScraperSystem } from '../scraper/scraper.test.js';
 import { testWebSearchSystem } from '../web-search/web-search.test.js';
 import { testTtsSystem } from '../tts/tts.test.js';
+import { testAcpServer, testAcpPromptTurn } from '../acp/acp.test.js';
 import {
   ALL_TOOLS,
   SUB_AGENT_ALLOWED_TOOLS,
@@ -322,6 +323,8 @@ async function runAll() {
   await testGithubRepositorySearchTool();
   await testTtsSystem();
   await testGenerateSpeechTool();
+  await testAcpServer();
+  await testAcpPromptTurn();
   console.log('All 47 Mythgram Native Tools Passed Tests!');
 }
 

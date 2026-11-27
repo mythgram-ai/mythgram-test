@@ -65,14 +65,22 @@ export function createNewSession(params: {
   });
 }
 
-export async function submitUserPromptToSession(params: {
+export interface AppendUserPromptParams {
   sessionId?: string;
   prompt: string;
   workspace?: string;
   providerId?: string;
   modelId?: string;
   attachments?: { name: string; path: string; size: number; type?: string }[];
-}): Promise<{ session: SessionRow; userMessageId: string }> {
+}
+
+/**
+ * Persists a user message without starting the background ReAct loop.
+ * Used by transports that own the run lifecycle (for example ACP prompt turns).
+ */
+export async function appendUserPromptToSession(
+  params: AppendUserPromptParams
+): Promise<{ session: SessionRow; userMessageId: string }> {
   const titleFromPrompt =
     params.prompt.trim().slice(0, 64) || 'Autonomous Agent Session';
 
@@ -121,17 +129,25 @@ export async function submitUserPromptToSession(params: {
   });
   db.flushRamToSqlite();
 
-  // Launch the background autonomous ReAct loop without blocking other sessions
-  setImmediate(() => {
-    runAgentLoop(session!.id).catch((err) => {
-      console.error(`[Session ${session!.id}] Background agent error:`, err);
-    });
-  });
-
   return {
     session: db.getSession(session.id) || session,
     userMessageId: userMsgId,
   };
+}
+
+export async function submitUserPromptToSession(
+  params: AppendUserPromptParams
+): Promise<{ session: SessionRow; userMessageId: string }> {
+  const result = await appendUserPromptToSession(params);
+
+  // Launch the background autonomous ReAct loop without blocking other sessions
+  setImmediate(() => {
+    runAgentLoop(result.session.id).catch((err) => {
+      console.error(`[Session ${result.session.id}] Background agent error:`, err);
+    });
+  });
+
+  return result;
 }
 
 export { abortSessionRun, isSessionRunning };

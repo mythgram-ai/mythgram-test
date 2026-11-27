@@ -7,7 +7,7 @@ import { getOpenAIToolsList, executeNativeTool } from '../tools/index.js';
 import { abortSubAgentsForSession } from './sub-agent.js';
 import { cancelPendingInteractionsForSession } from '../tools/interactive-store.js';
 import { buildMemoryContext, isFirstUserRequest } from '../memory/index.js';
-import { getActiveCustomAgent, CustomAgentDefinition } from '../custom-agents/index.js';
+import { getCustomAgentForSession, CustomAgentDefinition } from '../custom-agents/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -203,7 +203,7 @@ export async function runAgentLoop(sessionId: string): Promise<void> {
   // mid-run does not swap prompts or tools under the model.
   let customAgent: CustomAgentDefinition | null = null;
   try {
-    customAgent = await getActiveCustomAgent();
+    customAgent = await getCustomAgentForSession(sessionId);
   } catch {
     customAgent = null;
   }

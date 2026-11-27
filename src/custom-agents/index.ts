@@ -141,6 +141,26 @@ export async function getActiveCustomAgent(): Promise<CustomAgentDefinition | nu
   return agent;
 }
 
+// ACP sessions can pick their own agent mode without changing the global active agent.
+const sessionAgentOverrides = new Map<string, string>();
+
+export function setSessionCustomAgentId(sessionId: string, idOrNull: string | null): void {
+  if (idOrNull) sessionAgentOverrides.set(sessionId, idOrNull);
+  else sessionAgentOverrides.delete(sessionId);
+}
+
+export async function getCustomAgentForSession(
+  sessionId: string
+): Promise<CustomAgentDefinition | null> {
+  const overrideId = sessionAgentOverrides.get(sessionId);
+  if (overrideId) {
+    const agent = await getCustomAgentById(overrideId);
+    if (agent) return agent;
+    sessionAgentOverrides.delete(sessionId);
+  }
+  return getActiveCustomAgent();
+}
+
 export async function setActiveCustomAgent(idOrNull: string | null): Promise<string | null> {
   if (!idOrNull) {
     db.setSetting(ACTIVE_CUSTOM_AGENT_SETTING, '');
