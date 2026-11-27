@@ -365,6 +365,17 @@ class McpManager {
     }
   }
 
+  /** Drops every live connection and cached state, e.g. when the active profile changes. */
+  public resetAll(): void {
+    for (const serverId of Array.from(connections.keys())) {
+      this.disconnect(serverId, false);
+    }
+    connections.clear();
+    states.clear();
+    pendingOAuth.clear();
+    serverCache.clear();
+  }
+
   public async remove(serverId: string): Promise<boolean> {
     this.disconnect(serverId);
     states.delete(serverId);

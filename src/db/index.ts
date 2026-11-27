@@ -102,6 +102,7 @@ interface RamMessageBuffer {
 
 class MythgramDatabase {
   private db: DatabaseSync;
+  private dbPath: string;
   private ramMessages: Map<string, RamMessageBuffer> = new Map();
   private sessionRamMessages: Map<string, string[]> = new Map(); // sessionId -> ordered messageIds
   private activeSessionIds: Set<string> = new Set(); // tracks running main sessions and sub-agent runIds
@@ -109,8 +110,14 @@ class MythgramDatabase {
 
   constructor() {
     const paths = getDataDir();
-    this.db = new DatabaseSync(paths.dbPath);
+    this.dbPath = paths.dbPath;
+    this.db = new DatabaseSync(this.dbPath);
+    this.applyPragmas();
+    this.initSchema();
+    this.startFlushLoop();
+  }
 
+  private applyPragmas() {
     // High-performance SQLite pragmas for 1,000,000+ tokens/sec throughput
     this.db.exec(`
       PRAGMA journal_mode = WAL;
@@ -120,9 +127,50 @@ class MythgramDatabase {
       PRAGMA mmap_size = 536870912;
       PRAGMA busy_timeout = 10000;
     `);
+  }
 
+  /**
+   * Reopens the SQLite handle on another database file. Used when the active
+   * profile changes so every session, message and setting starts from scratch.
+   */
+  public switchDatabase(dbPath: string) {
+    if (this.dbPath === dbPath) return;
+    try {
+      this.flushRamToSqlite();
+    } catch {
+      // the old database may already be unusable; nothing else to persist
+    }
+    this.closeDatabase();
+    this.dbPath = dbPath;
+    this.openDatabase();
+  }
+
+  /** Releases the SQLite handle and every in-memory buffer (used before wiping a data dir). */
+  public closeDatabase(): void {
+    if (this.flushTimer) {
+      clearInterval(this.flushTimer);
+      this.flushTimer = null;
+    }
+    try {
+      this.db.close();
+    } catch {
+      // ignore close errors
+    }
+    this.ramMessages.clear();
+    this.sessionRamMessages.clear();
+    this.activeSessionIds.clear();
+  }
+
+  /** Reopens the handle on the current path, recreating the schema when the file was wiped. */
+  public openDatabase(): void {
+    this.db = new DatabaseSync(this.dbPath);
+    this.applyPragmas();
     this.initSchema();
     this.startFlushLoop();
+  }
+
+  public getDatabasePath(): string {
+    return this.dbPath;
   }
 
   private initSchema() {

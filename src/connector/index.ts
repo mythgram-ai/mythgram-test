@@ -8,7 +8,12 @@ import {
   listOAuthToolkits,
   listToolkitTools,
 } from './client.js';
-import { readConnectorStore, readConnectorStoreSync, updateConnectorStore } from './store.js';
+import {
+  readConnectorStore,
+  readConnectorStoreSync,
+  resetConnectorStoreCache,
+  updateConnectorStore,
+} from './store.js';
 import {
   ConnectorConnectionStatus,
   ConnectorLink,
@@ -20,6 +25,7 @@ import {
 
 export * from './types.js';
 export { clearToolkitCache } from './client.js';
+export { resetConnectorStoreCache } from './store.js';
 
 const TOOL_PREFIX = 'composio_';
 

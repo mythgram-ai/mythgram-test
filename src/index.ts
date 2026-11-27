@@ -7,6 +7,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { initDataDir, getDataDir } from './datadir/index.js';
+import { createReadStream } from 'node:fs';
+import { Readable } from 'node:stream';
 import { db, SlideItem } from './db/index.js';
 import {
   getAllResolvedProviders,
@@ -119,6 +121,7 @@ import {
   getConnectorSettings,
   listConnectorViews,
   refreshConnectorToolCache,
+  resetConnectorStoreCache,
   startConnectorConnection,
   updateConnectorSettings,
 } from './connector/index.js';
@@ -138,6 +141,7 @@ import {
 import {
   ensureCronStore,
   startCronEngine,
+  stopCronEngine,
   listSchedules,
   getSchedule,
   createSchedule,
@@ -160,6 +164,19 @@ import {
   webhookPublicView,
 } from './cron/index.js';
 import type { ScheduleDefinition } from './cron/index.js';
+import {
+  listProfiles,
+  getActiveProfileView,
+  createProfile,
+  updateProfile,
+  duplicateProfile,
+  activateProfile,
+  deleteProfile,
+  resetProfileData,
+  getProfileLogo,
+  exportProfileArchive,
+  ensureProfilesStore,
+} from './profiles/index.js';
 
 // Initialize .mythgram datadir and stores immediately on startup
 initDataDir();
@@ -173,6 +190,7 @@ void ensureKnowledgeStore();
 void ensureMcpStore();
 void ensureTtsStore();
 void ensureCronStore();
+void ensureProfilesStore();
 void initializeMcp();
 void refreshConnectorToolCache();
 void startCronEngine().catch((err) => {
@@ -229,6 +247,149 @@ app.post('/api/settings', async (c) => {
     setDefaultWorkspace(String(body.defaultWorkspace));
   }
   return c.json({ ok: true });
+});
+
+// ==================== PROFILES (isolated workspaces) ====================
+async function reloadProfileRuntime(): Promise<void> {
+  try {
+    stopCronEngine();
+    await startCronEngine();
+  } catch (err) {
+    console.error('[Profiles] Failed to restart automation engine:', err);
+  }
+  try {
+    mcpManager.resetAll();
+    resetConnectorStoreCache();
+    await initializeMcp();
+    await refreshConnectorToolCache();
+  } catch (err) {
+    console.error('[Profiles] Failed to reinitialize MCP after profile switch:', err);
+  }
+}
+
+function parseLogoSource(value: unknown): 'preset' | 'upload' | undefined {
+  return value === 'preset' || value === 'upload' ? value : undefined;
+}
+
+app.get('/api/profiles', async (c) => {
+  const data = await listProfiles();
+  return c.json({ ok: true, ...data });
+});
+
+app.get('/api/profiles/active', async (c) => {
+  const profile = await getActiveProfileView();
+  return c.json({ ok: true, profile });
+});
+
+app.post('/api/profiles', async (c) => {
+  try {
+    const body = await c.req.json();
+    const profile = await createProfile({
+      name: String(body.name || ''),
+      description: String(body.description || ''),
+      logoDataUrl:
+        typeof body.logoDataUrl === 'string' && body.logoDataUrl.trim()
+          ? body.logoDataUrl
+          : undefined,
+      logoSource: parseLogoSource(body.logoSource),
+      useDefaultLogo: Boolean(body.useDefaultLogo),
+    });
+    const data = await listProfiles();
+    return c.json({ ok: true, profile, ...data });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to create profile' }, 400);
+  }
+});
+
+app.patch('/api/profiles/:id', async (c) => {
+  try {
+    const body = await c.req.json();
+    const profile = await updateProfile(c.req.param('id'), {
+      name: body.name === undefined ? undefined : String(body.name),
+      description: body.description === undefined ? undefined : String(body.description),
+      logoDataUrl:
+        typeof body.logoDataUrl === 'string' && body.logoDataUrl.trim()
+          ? body.logoDataUrl
+          : undefined,
+      logoSource: parseLogoSource(body.logoSource),
+      useDefaultLogo: Boolean(body.useDefaultLogo),
+    });
+    const data = await listProfiles();
+    return c.json({ ok: true, profile, ...data });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to update profile' }, 400);
+  }
+});
+
+app.post('/api/profiles/:id/activate', async (c) => {
+  try {
+    const profile = await activateProfile(c.req.param('id'));
+    void reloadProfileRuntime();
+    const data = await listProfiles();
+    return c.json({ ok: true, profile, ...data });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to switch profile' }, 400);
+  }
+});
+
+app.post('/api/profiles/:id/duplicate', async (c) => {
+  try {
+    const profile = await duplicateProfile(c.req.param('id'));
+    const data = await listProfiles();
+    return c.json({ ok: true, profile, ...data });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to duplicate profile' }, 400);
+  }
+});
+
+app.post('/api/profiles/:id/reset', async (c) => {
+  try {
+    const id = c.req.param('id');
+    const before = await getActiveProfileView();
+    await resetProfileData(id);
+    if (before.id === id) void reloadProfileRuntime();
+    const data = await listProfiles();
+    return c.json({ ok: true, ...data });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to reset profile data' }, 400);
+  }
+});
+
+app.delete('/api/profiles/:id', async (c) => {
+  try {
+    const id = c.req.param('id');
+    const before = await getActiveProfileView();
+    await deleteProfile(id);
+    if (before.id === id) void reloadProfileRuntime();
+    const data = await listProfiles();
+    return c.json({ ok: true, ...data });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to delete profile' }, 400);
+  }
+});
+
+app.get('/api/profiles/:id/logo', async (c) => {
+  const logo = await getProfileLogo(c.req.param('id'));
+  if (!logo) return c.json({ ok: false, error: 'Logo not found' }, 404);
+  return c.body(logo.buffer as any, 200, {
+    'Content-Type': logo.contentType,
+    'Cache-Control': 'public, max-age=86400',
+    'X-Content-Type-Options': 'nosniff',
+    'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+  });
+});
+
+app.get('/api/profiles/:id/export', async (c) => {
+  try {
+    const { filePath, fileName } = await exportProfileArchive(c.req.param('id'));
+    return c.body(Readable.toWeb(createReadStream(filePath)) as any, 200, {
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="${fileName}"`,
+      'X-Content-Type-Options': 'nosniff',
+    });
+  } catch (err: any) {
+    return c.json({ ok: false, error: err?.message || 'Failed to export profile' }, 400);
+  }
 });
 
 app.get('/api/providers', (c) => {

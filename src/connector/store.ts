@@ -36,6 +36,11 @@ export async function readConnectorStore(): Promise<ConnectorStoreData> {
   return cache!;
 }
 
+/** Drops the in-memory copy so the next read comes from the active profile's data dir. */
+export function resetConnectorStoreCache(): void {
+  cache = null;
+}
+
 export function readConnectorStoreSync(): ConnectorStoreData {
   if (cache) return cache;
   try {

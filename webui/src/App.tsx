@@ -23,11 +23,14 @@ import {
   Terminal,
   CalendarClock,
   History,
+  ChevronUp,
 } from 'lucide-react';
 import { HomePage } from './pages/HomePage';
 import type { ProviderState } from './components/SettingsModal';
 import type { UploadedAttachment } from './components/PromptBox';
 import { McpIcon } from './components/McpIcon';
+import { fetchActiveProfile } from './lib/profilesApi';
+import type { ProfileSummary } from './lib/profilesApi';
 
 const ChatPage = lazy(() =>
   import('./pages/ChatPage').then((m) => ({ default: m.ChatPage }))
@@ -82,6 +85,12 @@ const SettingsModal = lazy(() =>
 const WorkspaceModal = lazy(() =>
   import('./components/WorkspaceModal').then((m) => ({ default: m.WorkspaceModal }))
 );
+const ProfilesPage = lazy(() =>
+  import('./pages/ProfilesPage').then((m) => ({ default: m.ProfilesPage }))
+);
+const ProfileMenu = lazy(() =>
+  import('./components/ProfileMenu').then((m) => ({ default: m.ProfileMenu }))
+);
 
 const preloadChatPage = () => {
   void import('./pages/ChatPage');
@@ -128,6 +137,9 @@ const preloadAutomationPage = () => {
 const preloadCheckpointsPage = () => {
   void import('./pages/CheckpointsPage');
 };
+const preloadProfilesPage = () => {
+  void import('./pages/ProfilesPage');
+};
 
 type ActivePageType =
   | 'home'
@@ -145,7 +157,8 @@ type ActivePageType =
   | 'mediageneration'
   | 'acp'
   | 'automation'
-  | 'checkpoints';
+  | 'checkpoints'
+  | 'profiles';
 
 interface SessionSummary {
   id: string;
@@ -195,6 +208,7 @@ function parsePageFromLocation(loc: Location): ActivePageType {
     return 'automation';
   }
   if (loc.pathname.startsWith('/checkpoints')) return 'checkpoints';
+  if (loc.pathname.startsWith('/profiles')) return 'profiles';
   return 'home';
 }
 
@@ -258,6 +272,13 @@ export const App: React.FC = () => {
   const [reasoningEffort, setReasoningEffort] = useState('default');
   const [defaultWorkspace, setDefaultWorkspace] = useState('');
 
+  // Active profile (isolated workspace) shown at the bottom of the sidebar
+  const [activeProfile, setActiveProfile] = useState<ProfileSummary | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [profileSwitching, setProfileSwitching] = useState(false);
+  const [profileMenuError, setProfileMenuError] = useState('');
+
   const settingsRequestRef = useRef<Promise<void> | null>(null);
   const sessionsRequestRef = useRef<Promise<void> | null>(null);
 
@@ -302,6 +323,37 @@ export const App: React.FC = () => {
       await request;
     } finally {
       if (sessionsRequestRef.current === request) sessionsRequestRef.current = null;
+    }
+  }, []);
+
+  const loadActiveProfile = useCallback(async () => {
+    const profile = await fetchActiveProfile();
+    setActiveProfile(profile);
+    setProfileLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void loadActiveProfile();
+  }, [loadActiveProfile]);
+
+  const handleActivateProfile = useCallback(async (profileId: string) => {
+    if (!profileId) return;
+    setProfileMenuError('');
+    setProfileSwitching(true);
+    try {
+      const res = await fetch(`/api/profiles/${encodeURIComponent(profileId)}/activate`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!data?.ok) {
+        setProfileMenuError(data?.error || 'Could not switch profile.');
+        setProfileSwitching(false);
+        return;
+      }
+      window.location.assign('/');
+    } catch {
+      setProfileMenuError('Could not reach the server.');
+      setProfileSwitching(false);
     }
   }, []);
 
@@ -621,6 +673,17 @@ export const App: React.FC = () => {
       return (
         <Suspense fallback={<PageSkeleton />}>
           <CheckpointsPage
+            onOpenSettings={() => setSettingsOpen(true)}
+            onOpenSidebar={() => setMobileSidebarOpen(true)}
+          />
+        </Suspense>
+      );
+    }
+
+    if (activePage === 'profiles') {
+      return (
+        <Suspense fallback={<PageSkeleton />}>
+          <ProfilesPage
             onOpenSettings={() => setSettingsOpen(true)}
             onOpenSidebar={() => setMobileSidebarOpen(true)}
           />
@@ -1048,6 +1111,52 @@ export const App: React.FC = () => {
             </svg>
           </button>
         </div>
+        {/* Active Profile + Menu */}
+        <div className="sidebar-profile">
+          <button
+            id="sidebar-profile-btn"
+            type="button"
+            className={`sidebar-profile-btn ${profileMenuOpen ? 'is-open' : ''}`}
+            title={activeProfile ? `${activeProfile.name} - profile menu` : 'Profile menu'}
+            aria-haspopup="menu"
+            aria-expanded={profileMenuOpen}
+            onPointerEnter={preloadProfilesPage}
+            onClick={() => {
+              setProfileMenuError('');
+              setProfileMenuOpen((open) => !open);
+            }}
+          >
+            {profileLoading ? (
+              <span className="profile-avatar skeleton" aria-hidden="true" />
+            ) : (
+              <img
+                className="profile-avatar"
+                src={activeProfile?.logo || '/logo.svg'}
+                alt=""
+                onError={(event) => {
+                  (event.currentTarget as HTMLImageElement).src = '/logo.svg';
+                }}
+              />
+            )}
+            <span className="sidebar-profile-text">
+              <span className="sidebar-profile-name">
+                {profileLoading ? 'Loading profile…' : activeProfile?.name || 'Profile'}
+              </span>
+              <span className="sidebar-profile-sub">
+                {activeProfile?.is_default
+                  ? 'Default profile'
+                  : activeProfile
+                  ? 'Custom profile'
+                  : 'Profile'}
+              </span>
+            </span>
+            <ChevronUp
+              size={14}
+              className={`sidebar-profile-chevron ${profileMenuOpen ? 'is-open' : ''}`}
+            />
+          </button>
+        </div>
+
       </aside>
 
       {mobileSidebarOpen && (
@@ -1056,6 +1165,52 @@ export const App: React.FC = () => {
           aria-hidden="true"
           onClick={() => setMobileSidebarOpen(false)}
         />
+      )}
+
+      {profileMenuOpen && (
+        <Suspense
+          fallback={
+            <div className={`profile-menu ${sidebarCollapsed ? 'is-rail' : ''}`}>
+              <div className="profile-menu-loading">
+                <span
+                  className="skeleton"
+                  style={{ width: 36, height: 36, borderRadius: 10 }}
+                />
+                <div style={{ flex: 1 }}>
+                  <span className="skeleton" style={{ width: '60%', height: 10 }} />
+                  <span
+                    className="skeleton"
+                    style={{ width: '40%', height: 9, marginTop: 6 }}
+                  />
+                </div>
+              </div>
+            </div>
+          }
+        >
+          <ProfileMenu
+            profile={activeProfile}
+            loading={profileLoading}
+            error={profileMenuError}
+            switching={profileSwitching}
+            rail={sidebarCollapsed}
+            onClose={() => {
+              setProfileMenuOpen(false);
+              setProfileMenuError('');
+            }}
+            onOpenProfiles={() => {
+              setProfileMenuOpen(false);
+              setProfileMenuError('');
+              preloadProfilesPage();
+              navigateToPage('profiles', '/profiles');
+            }}
+            onOpenSettings={() => {
+              setProfileMenuOpen(false);
+              setProfileMenuError('');
+              setSettingsOpen(true);
+            }}
+            onSwitchToDefault={() => void handleActivateProfile('default')}
+          />
+        </Suspense>
       )}
 
       {/* Route View */}
@@ -1084,6 +1239,19 @@ export const App: React.FC = () => {
             onSelectWorkspace={handleSelectWorkspace}
           />
         </Suspense>
+      )}
+
+      {profileSwitching && (
+        <div className="profile-switch-overlay" role="status" aria-live="polite">
+          <div className="profile-switch-card">
+            <img src={activeProfile?.logo || '/logo.svg'} alt="" />
+            <div className="profile-switch-text">
+              <span className="profile-switch-title">Switching profile…</span>
+              <span className="profile-switch-sub">Loading a fresh workspace…</span>
+            </div>
+            <span className="spinner" />
+          </div>
+        </div>
       )}
     </div>
   );
