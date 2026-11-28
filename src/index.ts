@@ -1799,7 +1799,7 @@ app.get('/api/sessions/:id', (c) => {
   }));
   const todos = db.getSessionTodos(id);
   const pendingInteractions = getPendingInteractionsForSession(id);
-  const creds = getProviderRuntimeCredentials(session.provider_id);
+  const creds = getProviderRuntimeCredentials(session.provider_id, session.model_id);
 
   return c.json({
     session: {
@@ -1882,7 +1882,7 @@ app.get('/api/sessions/:id/stream', (c) => {
     const todos = db.getSessionTodos(sessionId);
     const pendingInteractions = getPendingInteractionsForSession(sessionId);
     const creds = session
-      ? getProviderRuntimeCredentials(session.provider_id)
+      ? getProviderRuntimeCredentials(session.provider_id, session.model_id)
       : { contextWindow: 128000 };
 
     // 1. Replay current state snapshot immediately upon connect / refresh

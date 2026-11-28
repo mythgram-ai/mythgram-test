@@ -342,9 +342,9 @@ export const CheckpointsPage: React.FC<CheckpointsPageProps> = ({
           gap: 10,
           flexWrap: 'wrap',
           padding: '7px 14px',
-          borderBottom: '1px solid #1e1e22',
+          borderBottom: '1px solid #1f1f1f',
           fontSize: 11.5,
-          color: '#9e9ea7',
+          color: '#a1a1a1',
         }}
       >
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>

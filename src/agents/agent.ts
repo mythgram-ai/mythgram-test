@@ -214,7 +214,7 @@ export async function runAgentLoop(sessionId: string): Promise<void> {
       const currentSession = db.getSession(sessionId);
       if (!currentSession) break;
 
-      const providerCreds = getProviderRuntimeCredentials(currentSession.provider_id);
+      const providerCreds = getProviderRuntimeCredentials(currentSession.provider_id, currentSession.model_id);
       if (visionSupported === null) visionSupported = providerCreds.visionSupport;
       const reasoningEffort = db.getSetting('reasoning_effort', 'default');
       const systemPrompt = await loadSystemPrompt(

@@ -220,16 +220,16 @@ export const SubAgentsPage: React.FC<SubAgentsPageProps> = ({
         <div
           style={{
             width: 'clamp(250px, 32%, 340px)',
-            borderRight: '1px solid #1e1e22',
+            borderRight: '1px solid #1f1f1f',
             display: 'flex',
             flexDirection: 'column',
-            backgroundColor: '#0c0c0f',
+            backgroundColor: '#000000',
             overflowY: 'auto',
             padding: 8,
             gap: 6,
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#71717a', padding: '4px 6px' }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#7d7d7d', padding: '4px 6px' }}>
             DEFAULT SUB-AGENTS (10 BUILT-IN)
           </div>
           {subAgents
@@ -243,32 +243,32 @@ export const SubAgentsPage: React.FC<SubAgentsPageProps> = ({
                   borderRadius: 8,
                   cursor: 'pointer',
                   backgroundColor:
-                    selectedAgentName === agent.name ? '#1c1c22' : '#131317',
+                    selectedAgentName === agent.name ? '#121212' : '#0a0a0a',
                   border:
                     selectedAgentName === agent.name
-                      ? '1px solid #383842'
-                      : '1px solid #1f1f25',
+                      ? '1px solid #303030'
+                      : '1px solid #1f1f1f',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 600, fontSize: 12.5, color: '#f4f4f5', fontFamily: 'JetBrains Mono, monospace' }}>
+                  <span style={{ fontWeight: 600, fontSize: 12.5, color: '#ededed', fontFamily: 'JetBrains Mono, monospace' }}>
                     {agent.name}
                   </span>
-                  <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, backgroundColor: '#1f1f27', color: '#9e9ea7' }}>
+                  <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, backgroundColor: '#000000', color: '#a1a1a1' }}>
                     Default
                   </span>
                 </div>
-                <div style={{ fontSize: 11.5, color: '#9e9ea7', marginTop: 4, lineHeight: 1.35 }}>
+                <div style={{ fontSize: 11.5, color: '#a1a1a1', marginTop: 4, lineHeight: 1.35 }}>
                   {agent.description}
                 </div>
               </div>
             ))}
 
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#71717a', padding: '10px 6px 4px 6px' }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#7d7d7d', padding: '10px 6px 4px 6px' }}>
             CUSTOM SUB-AGENTS (.mythgram/sub-agents)
           </div>
           {subAgents.filter((a) => !a.is_default).length === 0 && (
-            <div style={{ padding: '4px 8px', fontSize: 11.5, color: '#64646c' }}>
+            <div style={{ padding: '4px 8px', fontSize: 11.5, color: '#7d7d7d' }}>
               No custom sub-agents yet. Click "Create Sub-Agent(s)" to add one or more.
             </div>
           )}
@@ -283,15 +283,15 @@ export const SubAgentsPage: React.FC<SubAgentsPageProps> = ({
                   borderRadius: 8,
                   cursor: 'pointer',
                   backgroundColor:
-                    selectedAgentName === agent.name ? '#1c1c22' : '#131317',
+                    selectedAgentName === agent.name ? '#121212' : '#0a0a0a',
                   border:
                     selectedAgentName === agent.name
-                      ? '1px solid #383842'
-                      : '1px solid #1f1f25',
+                      ? '1px solid #303030'
+                      : '1px solid #1f1f1f',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 600, fontSize: 12.5, color: '#60a5fa', fontFamily: 'JetBrains Mono, monospace' }}>
+                  <span style={{ fontWeight: 600, fontSize: 12.5, color: '#ededed', fontFamily: 'JetBrains Mono, monospace' }}>
                     {agent.name}
                   </span>
                   <button
@@ -304,7 +304,7 @@ export const SubAgentsPage: React.FC<SubAgentsPageProps> = ({
                     <Trash2 size={12} />
                   </button>
                 </div>
-                <div style={{ fontSize: 11.5, color: '#9e9ea7', marginTop: 4, lineHeight: 1.35 }}>
+                <div style={{ fontSize: 11.5, color: '#a1a1a1', marginTop: 4, lineHeight: 1.35 }}>
                   {agent.description}
                 </div>
               </div>
@@ -312,15 +312,15 @@ export const SubAgentsPage: React.FC<SubAgentsPageProps> = ({
         </div>
 
         {/* Right Sub-Agent Detail View */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 18, backgroundColor: '#09090b' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 18, backgroundColor: '#000000' }}>
           {selectedAgent ? (
             <div style={{ maxWidth: 760, display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: 18, fontFamily: 'JetBrains Mono, monospace', color: '#f4f4f5' }}>
+                  <h2 style={{ margin: 0, fontSize: 18, fontFamily: 'JetBrains Mono, monospace', color: '#ededed' }}>
                     {selectedAgent.name}
                   </h2>
-                  <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#a1a1aa' }}>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#a1a1a1' }}>
                     {selectedAgent.description}
                   </p>
                 </div>
@@ -332,10 +332,10 @@ export const SubAgentsPage: React.FC<SubAgentsPageProps> = ({
                       gap: 5,
                       padding: '4px 10px',
                       borderRadius: 6,
-                      backgroundColor: '#18181d',
-                      border: '1px solid #27272f',
+                      backgroundColor: '#000000',
+                      border: '1px solid #262626',
                       fontSize: 11.5,
-                      color: '#9e9ea7',
+                      color: '#a1a1a1',
                     }}
                   >
                     <Shield size={12} />
@@ -361,11 +361,11 @@ export const SubAgentsPage: React.FC<SubAgentsPageProps> = ({
                     margin: 0,
                     padding: 12,
                     borderRadius: 8,
-                    backgroundColor: '#121216',
-                    border: '1px solid #232329',
+                    backgroundColor: '#000000',
+                    border: '1px solid #262626',
                     fontFamily: 'JetBrains Mono, monospace',
                     fontSize: 12,
-                    color: '#e4e4e7',
+                    color: '#ededed',
                     whiteSpace: 'pre-wrap',
                   }}
                 >
@@ -384,11 +384,11 @@ export const SubAgentsPage: React.FC<SubAgentsPageProps> = ({
                       style={{
                         padding: '4px 8px',
                         borderRadius: 6,
-                        backgroundColor: '#16161b',
-                        border: '1px solid #272730',
+                        backgroundColor: '#000000',
+                        border: '1px solid #262626',
                         fontSize: 11.5,
                         fontFamily: 'JetBrains Mono, monospace',
-                        color: '#d4d4d8',
+                        color: '#d4d4d4',
                       }}
                     >
                       {t}
@@ -433,15 +433,15 @@ export const SubAgentsPage: React.FC<SubAgentsPageProps> = ({
                   style={{
                     padding: 12,
                     borderRadius: 8,
-                    backgroundColor: '#16161a',
-                    border: '1px solid #27272f',
+                    backgroundColor: '#000000',
+                    border: '1px solid #262626',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 10,
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 12.5, fontWeight: 600, color: '#e4e4e7' }}>
+                    <span style={{ fontSize: 12.5, fontWeight: 600, color: '#ededed' }}>
                       Sub-Agent #{idx + 1}
                     </span>
                     {draftForms.length > 1 && (
@@ -534,14 +534,14 @@ export const SubAgentsPage: React.FC<SubAgentsPageProps> = ({
                               fontSize: 11.5,
                               fontFamily: 'JetBrains Mono, monospace',
                               cursor: 'pointer',
-                              backgroundColor: checked ? '#22222c' : '#111115',
+                              backgroundColor: checked ? '#0a0a0a' : '#000000',
                               border: checked
-                                ? '1px solid #60a5fa'
-                                : '1px solid #25252c',
-                              color: checked ? '#f4f4f5' : '#71717a',
+                                ? '1px solid #ededed'
+                                : '1px solid #121212',
+                              color: checked ? '#ededed' : '#7d7d7d',
                             }}
                           >
-                            {checked && <Check size={11} color="#60a5fa" />}
+                            {checked && <Check size={11} color="#ededed" />}
                             <span>{tool.name}</span>
                           </button>
                         );

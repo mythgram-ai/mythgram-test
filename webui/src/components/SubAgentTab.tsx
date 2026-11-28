@@ -203,8 +203,8 @@ export const SubAgentTab: React.FC<SubAgentTabProps> = ({
       <div
         style={{
           padding: '8px 10px',
-          borderBottom: '1px solid #1e1e22',
-          backgroundColor: '#121215',
+          borderBottom: '1px solid #1f1f1f',
+          backgroundColor: '#000000',
           display: 'flex',
           alignItems: 'center',
           gap: 6,
@@ -212,7 +212,7 @@ export const SubAgentTab: React.FC<SubAgentTabProps> = ({
         }}
       >
         {runs.length === 0 && (
-          <span style={{ fontSize: 12, color: '#71717a' }}>
+          <span style={{ fontSize: 12, color: '#7d7d7d' }}>
             No sub-agent runs in this session yet.
           </span>
         )}
@@ -229,15 +229,15 @@ export const SubAgentTab: React.FC<SubAgentTabProps> = ({
                 gap: 6,
                 padding: '5px 10px',
                 borderRadius: 6,
-                border: isSelected ? '1px solid #60a5fa' : '1px solid #27272f',
-                backgroundColor: isSelected ? '#1e1e28' : '#16161b',
-                color: isSelected ? '#f4f4f5' : '#9e9ea7',
+                border: isSelected ? '1px solid #ededed' : '1px solid #262626',
+                backgroundColor: isSelected ? '#191919' : '#0a0a0a',
+                color: isSelected ? '#ededed' : '#a1a1a1',
                 fontSize: 11.5,
                 cursor: 'pointer',
                 flexShrink: 0,
               }}
             >
-              <Bot size={12} color="#60a5fa" />
+              <Bot size={12} color="#ededed" />
               <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                 {r.agent_name}
               </span>
@@ -262,7 +262,7 @@ export const SubAgentTab: React.FC<SubAgentTabProps> = ({
           minHeight: 0,
           overflowY: 'auto',
           padding: 14,
-          backgroundColor: '#09090b',
+          backgroundColor: '#000000',
           display: 'flex',
           flexDirection: 'column',
           gap: 14,
@@ -274,24 +274,24 @@ export const SubAgentTab: React.FC<SubAgentTabProps> = ({
               style={{
                 padding: '10px 12px',
                 borderRadius: 8,
-                backgroundColor: '#131318',
-                border: '1px solid #24242d',
+                backgroundColor: '#000000',
+                border: '1px solid #262626',
                 fontSize: 12,
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontWeight: 600, color: '#60a5fa', fontFamily: 'JetBrains Mono, monospace' }}>
+                <span style={{ fontWeight: 600, color: '#ededed', fontFamily: 'JetBrains Mono, monospace' }}>
                   Sub-Agent: {activeRun.agent_name}
                 </span>
-                <span style={{ fontSize: 11, color: '#9e9ea7' }}>
+                <span style={{ fontSize: 11, color: '#a1a1a1' }}>
                   Status: {runStatus || activeRun.status}
                 </span>
               </div>
-              <div style={{ color: '#d4d4d8', whiteSpace: 'pre-wrap' }}>
+              <div style={{ color: '#d4d4d4', whiteSpace: 'pre-wrap' }}>
                 {activeRun.task}
               </div>
               {activeRun.output_file_path && (
-                <div style={{ marginTop: 6, fontSize: 11, color: '#71717a', fontFamily: 'JetBrains Mono, monospace' }}>
+                <div style={{ marginTop: 6, fontSize: 11, color: '#7d7d7d', fontFamily: 'JetBrains Mono, monospace' }}>
                   Background Output File: {activeRun.output_file_path}
                 </div>
               )}
@@ -357,7 +357,7 @@ export const SubAgentTab: React.FC<SubAgentTabProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#64646c',
+              color: '#7d7d7d',
               fontSize: 12.5,
               textAlign: 'center',
             }}

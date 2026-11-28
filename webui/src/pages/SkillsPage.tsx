@@ -180,16 +180,16 @@ export const SkillsPage: React.FC<SkillsPageProps> = ({
         <div
           style={{
             width: 'clamp(240px, 32%, 340px)',
-            borderRight: '1px solid #1e1e22',
+            borderRight: '1px solid #1f1f1f',
             display: 'flex',
             flexDirection: 'column',
-            backgroundColor: '#0c0c0f',
+            backgroundColor: '#000000',
             overflowY: 'auto',
             padding: 8,
             gap: 6,
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#71717a', padding: '4px 6px' }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#7d7d7d', padding: '4px 6px' }}>
             AVAILABLE SKILLS ({skills.length})
           </div>
           {skills.map((skill) => (
@@ -201,15 +201,15 @@ export const SkillsPage: React.FC<SkillsPageProps> = ({
                 borderRadius: 8,
                 cursor: 'pointer',
                 backgroundColor:
-                  selectedName === skill.name ? '#1c1c22' : '#131317',
+                  selectedName === skill.name ? '#121212' : '#0a0a0a',
                 border:
                   selectedName === skill.name
-                    ? '1px solid #383842'
-                    : '1px solid #1f1f25',
+                    ? '1px solid #303030'
+                    : '1px solid #1f1f1f',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: 600, fontSize: 12.5, color: '#f4f4f5', fontFamily: 'JetBrains Mono, monospace' }}>
+                <span style={{ fontWeight: 600, fontSize: 12.5, color: '#ededed', fontFamily: 'JetBrains Mono, monospace' }}>
                   {skill.name}
                 </span>
                 <button
@@ -222,10 +222,10 @@ export const SkillsPage: React.FC<SkillsPageProps> = ({
                   <Trash2 size={12} />
                 </button>
               </div>
-              <div style={{ fontSize: 11.5, color: '#9e9ea7', marginTop: 4, lineHeight: 1.35 }}>
+              <div style={{ fontSize: 11.5, color: '#a1a1a1', marginTop: 4, lineHeight: 1.35 }}>
                 {skill.description}
               </div>
-              <div style={{ fontSize: 10.5, color: '#64646c', marginTop: 6, fontFamily: 'JetBrains Mono, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 10.5, color: '#7d7d7d', marginTop: 6, fontFamily: 'JetBrains Mono, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {skill.skill_md_path}
               </div>
             </div>
@@ -233,27 +233,27 @@ export const SkillsPage: React.FC<SkillsPageProps> = ({
         </div>
 
         {/* Right Skill Detail & SKILL.md Preview */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 18, backgroundColor: '#09090b' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 18, backgroundColor: '#000000' }}>
           {selectedSkill ? (
             <div style={{ maxWidth: 780, display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <h2 style={{ margin: 0, fontSize: 18, fontFamily: 'JetBrains Mono, monospace', color: '#f4f4f5' }}>
+                <h2 style={{ margin: 0, fontSize: 18, fontFamily: 'JetBrains Mono, monospace', color: '#ededed' }}>
                   {selectedSkill.name}
                 </h2>
-                <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#a1a1aa' }}>
+                <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#a1a1a1' }}>
                   {selectedSkill.description}
                 </p>
-                <div style={{ marginTop: 6, fontSize: 11.5, color: '#60a5fa', fontFamily: 'JetBrains Mono, monospace' }}>
+                <div style={{ marginTop: 6, fontSize: 11.5, color: '#ededed', fontFamily: 'JetBrains Mono, monospace' }}>
                   SKILL.md Path: {selectedSkill.skill_md_path}
                 </div>
               </div>
 
               <div className="form-grid-2">
-                <div style={{ padding: 12, borderRadius: 8, backgroundColor: '#121216', border: '1px solid #222228' }}>
+                <div style={{ padding: 12, borderRadius: 8, backgroundColor: '#000000', border: '1px solid #262626' }}>
                   <div className="field-label">Subfolders ({selectedSkill.subfolders.length})</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
                     {selectedSkill.subfolders.length === 0 ? (
-                      <span style={{ fontSize: 11.5, color: '#64646c' }}>No subfolders</span>
+                      <span style={{ fontSize: 11.5, color: '#7d7d7d' }}>No subfolders</span>
                     ) : (
                       selectedSkill.subfolders.map((sf) => (
                         <span
@@ -264,12 +264,12 @@ export const SkillsPage: React.FC<SkillsPageProps> = ({
                             gap: 5,
                             padding: '3px 8px',
                             borderRadius: 5,
-                            backgroundColor: '#1a1a22',
+                            backgroundColor: '#000000',
                             fontSize: 11.5,
                             fontFamily: 'JetBrains Mono, monospace',
                           }}
                         >
-                          <Folder size={12} color="#60a5fa" />
+                          <Folder size={12} color="#ededed" />
                           {sf}
                         </span>
                       ))
@@ -277,7 +277,7 @@ export const SkillsPage: React.FC<SkillsPageProps> = ({
                   </div>
                 </div>
 
-                <div style={{ padding: 12, borderRadius: 8, backgroundColor: '#121216', border: '1px solid #222228' }}>
+                <div style={{ padding: 12, borderRadius: 8, backgroundColor: '#000000', border: '1px solid #262626' }}>
                   <div className="field-label">Files ({selectedSkill.files.length})</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
                     {selectedSkill.files.map((f) => (
@@ -289,12 +289,12 @@ export const SkillsPage: React.FC<SkillsPageProps> = ({
                           gap: 5,
                           padding: '3px 8px',
                           borderRadius: 5,
-                          backgroundColor: '#1a1a22',
+                          backgroundColor: '#000000',
                           fontSize: 11.5,
                           fontFamily: 'JetBrains Mono, monospace',
                         }}
                       >
-                        <FileText size={12} color="#a1a1aa" />
+                        <FileText size={12} color="#a1a1a1" />
                         {f}
                       </span>
                     ))}
@@ -302,7 +302,7 @@ export const SkillsPage: React.FC<SkillsPageProps> = ({
                 </div>
               </div>
 
-              <div style={{ padding: 16, borderRadius: 8, backgroundColor: '#111114', border: '1px solid #232329' }}>
+              <div style={{ padding: 16, borderRadius: 8, backgroundColor: '#000000', border: '1px solid #262626' }}>
                 <div className="field-label" style={{ marginBottom: 8 }}>
                   SKILL.md Content
                 </div>
@@ -389,12 +389,12 @@ export const SkillsPage: React.FC<SkillsPageProps> = ({
                       gap: 6,
                       padding: '4px 8px',
                       borderRadius: 6,
-                      backgroundColor: '#1c1c24',
+                      backgroundColor: '#000000',
                       fontSize: 11.5,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
                   >
-                    <Folder size={12} color="#60a5fa" />
+                    <Folder size={12} color="#ededed" />
                     {sf}
                     <X
                       size={11}
@@ -421,7 +421,7 @@ export const SkillsPage: React.FC<SkillsPageProps> = ({
             </div>
 
             <div className="workspace-footer">
-              <span style={{ fontSize: 11.5, color: '#71717a' }}>
+              <span style={{ fontSize: 11.5, color: '#7d7d7d' }}>
                 Saved to .mythgram/skills/{newName || '<skill-name>'}/SKILL.md
               </span>
               <div className="workspace-footer-buttons">

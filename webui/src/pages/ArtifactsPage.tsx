@@ -206,7 +206,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({
             overflowY: 'auto',
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: 12,
-            color: '#e4e4e7',
+            color: '#ededed',
             whiteSpace: 'pre-wrap',
           }}
         >
@@ -225,7 +225,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({
             width: '100%',
             height: '100%',
             border: 'none',
-            backgroundColor: '#ffffff',
+            backgroundColor: '#ededed',
           }}
           sandbox="allow-scripts allow-same-origin"
         />
@@ -291,31 +291,31 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({
         <div
           style={{
             width: 'clamp(240px, 32%, 340px)',
-            borderRight: '1px solid #1e1e22',
+            borderRight: '1px solid #1f1f1f',
             display: 'flex',
             flexDirection: 'column',
-            backgroundColor: '#0c0c0f',
+            backgroundColor: '#000000',
           }}
         >
           <div
             style={{
               padding: '10px 12px',
-              borderBottom: '1px solid #1c1c20',
+              borderBottom: '1px solid #1f1f1f',
               fontSize: 11.5,
               fontWeight: 600,
-              color: '#9e9ea7',
+              color: '#a1a1a1',
             }}
           >
             SAVED ARTIFACTS ({artifacts.length})
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
             {loading && artifacts.length === 0 && (
-              <div style={{ padding: 12, fontSize: 12, color: '#71717a' }}>
+              <div style={{ padding: 12, fontSize: 12, color: '#7d7d7d' }}>
                 Loading artifacts...
               </div>
             )}
             {!loading && artifacts.length === 0 && (
-              <div style={{ padding: 12, fontSize: 12, color: '#71717a' }}>
+              <div style={{ padding: 12, fontSize: 12, color: '#7d7d7d' }}>
                 No artifacts saved yet. The agent can save reusable files using{' '}
                 <code>save_artifacts</code>.
               </div>
@@ -331,19 +331,19 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({
                   padding: '10px 12px',
                   borderRadius: 8,
                   cursor: 'pointer',
-                  backgroundColor: selectedId === art.id ? '#1c1c22' : '#131317',
+                  backgroundColor: selectedId === art.id ? '#0a0a0a' : '#000000',
                   border:
                     selectedId === art.id
-                      ? '1px solid #383842'
-                      : '1px solid #1f1f25',
+                      ? '1px solid #1f1f1f'
+                      : '1px solid #1f1f1f',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 4,
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, fontSize: 12.5, color: '#f4f4f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <FileText size={13} color="#60a5fa" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, fontSize: 12.5, color: '#ededed', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <FileText size={13} color="#ededed" />
                     <span>{art.title || art.name}</span>
                   </div>
                   <button
@@ -356,10 +356,10 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({
                     <Trash2 size={12} />
                   </button>
                 </div>
-                <div style={{ fontSize: 11.5, color: '#9e9ea7', lineHeight: 1.4 }}>
+                <div style={{ fontSize: 11.5, color: '#a1a1a1', lineHeight: 1.4 }}>
                   {art.description}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2, fontSize: 10.5, color: '#64646c', fontFamily: 'JetBrains Mono, monospace' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2, fontSize: 10.5, color: '#7d7d7d', fontFamily: 'JetBrains Mono, monospace' }}>
                   <span>{art.type}</span>
                   <span>{art.id}</span>
                 </div>
@@ -369,26 +369,26 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({
         </div>
 
         {/* Right Artifact Preview / Editor */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, backgroundColor: '#09090b' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, backgroundColor: '#000000' }}>
           {selectedArtifact ? (
             <>
               <div
                 style={{
                   padding: '10px 14px',
-                  borderBottom: '1px solid #1e1e22',
+                  borderBottom: '1px solid #1f1f1f',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   flexWrap: 'wrap',
                   gap: 8,
-                  backgroundColor: '#121215',
+                  backgroundColor: '#000000',
                 }}
               >
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: '#f4f4f5' }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: '#ededed' }}>
                     {selectedArtifact.title}
                   </div>
-                  <div style={{ fontSize: 11, color: '#71717a', fontFamily: 'JetBrains Mono, monospace' }}>
+                  <div style={{ fontSize: 11, color: '#7d7d7d', fontFamily: 'JetBrains Mono, monospace' }}>
                     {selectedArtifact.file_path}
                   </div>
                 </div>
@@ -399,7 +399,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({
                     style={{
                       padding: '4px 10px',
                       fontSize: 11.5,
-                      backgroundColor: viewMode === 'rendered' ? '#27272f' : undefined,
+                      backgroundColor: viewMode === 'rendered' ? '#121212' : undefined,
                     }}
                     onClick={() => setViewMode('rendered')}
                   >
@@ -412,7 +412,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({
                     style={{
                       padding: '4px 10px',
                       fontSize: 11.5,
-                      backgroundColor: viewMode === 'raw' ? '#27272f' : undefined,
+                      backgroundColor: viewMode === 'raw' ? '#121212' : undefined,
                     }}
                     onClick={() => setViewMode('raw')}
                   >
@@ -425,7 +425,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({
                     style={{
                       padding: '4px 10px',
                       fontSize: 11.5,
-                      backgroundColor: viewMode === 'edit' ? '#27272f' : undefined,
+                      backgroundColor: viewMode === 'edit' ? '#121212' : undefined,
                     }}
                     onClick={() => setViewMode('edit')}
                   >
@@ -454,7 +454,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#64646c',
+                color: '#7d7d7d',
                 fontSize: 13,
               }}
             >

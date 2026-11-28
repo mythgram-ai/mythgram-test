@@ -265,7 +265,45 @@ export async function fetchModelsForProvider(
   return models;
 }
 
-export function getProviderRuntimeCredentials(providerId: string): {
+function findConfiguredModel(providerId: string, modelId: string): ModelMetadata | undefined {
+  const saved = db.getProviderConfig(providerId);
+  const builtin = BUILTIN_PROVIDERS_MAP.get(providerId);
+  let models: ModelMetadata[] = builtin?.fallbackModels || [];
+  if (saved?.cached_models_json) {
+    try {
+      const parsed = JSON.parse(saved.cached_models_json);
+      if (Array.isArray(parsed) && parsed.length > 0) models = parsed;
+    } catch {
+      // ignore malformed cache
+    }
+  }
+  const match = models.find((m) => m.id === modelId);
+  if (match || models.length === 0) return match;
+  return builtin?.fallbackModels?.find((m) => m.id === modelId);
+}
+
+/**
+ * Context window for the model a session actually talks to.
+ * Manual provider override wins, then the model's own metadata, then a 128K default.
+ */
+export function resolveContextWindow(providerId: string, modelId?: string | null): number {
+  const saved = db.getProviderConfig(providerId);
+  const manual = parseManualContextWindow(saved?.manual_context_limit);
+  if (manual) return manual;
+
+  const targetModel =
+    modelId || saved?.selected_model || db.getSetting('active_model', '');
+  if (targetModel) {
+    const model = findConfiguredModel(providerId, targetModel);
+    if (model?.contextWindow && model.contextWindow > 0) return model.contextWindow;
+  }
+  return 128000;
+}
+
+export function getProviderRuntimeCredentials(
+  providerId: string,
+  modelId?: string | null
+): {
   baseUrl: string;
   apiKey: string;
   headers: Record<string, string>;
@@ -288,7 +326,7 @@ export function getProviderRuntimeCredentials(providerId: string): {
     visionSupport = Boolean(saved.manual_vision_support);
   }
 
-  const contextWindow = parseManualContextWindow(saved?.manual_context_limit) || 128000;
+  const contextWindow = resolveContextWindow(providerId, modelId);
 
   return {
     baseUrl: baseUrl.replace(/\/+$/, ''),

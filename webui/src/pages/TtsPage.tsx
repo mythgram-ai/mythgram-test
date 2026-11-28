@@ -49,7 +49,7 @@ const STATUS_BADGE: Record<
   },
   starting: { label: 'Starting local-tts…', color: '#eab308', dotClass: 'is-connecting' },
   error: { label: 'Error', color: '#f87171', dotClass: 'is-error' },
-  stopped: { label: 'Stopped', color: '#9e9ea7', dotClass: 'is-disconnected' },
+  stopped: { label: 'Stopped', color: '#a1a1a1', dotClass: 'is-disconnected' },
 };
 
 export const TtsPage: React.FC<TtsPageProps> = ({ onOpenSettings, onOpenSidebar }) => {
@@ -465,7 +465,7 @@ export const TtsPage: React.FC<TtsPageProps> = ({ onOpenSettings, onOpenSidebar 
                     href={statusData.base_url || 'http://localhost:7878'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ color: '#93c5fd' }}
+                    style={{ color: '#d4d4d4' }}
                   >
                     {statusData.base_url || 'http://localhost:7878'}
                   </a>{' '}

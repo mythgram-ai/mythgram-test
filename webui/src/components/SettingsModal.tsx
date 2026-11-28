@@ -524,7 +524,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             {/* Reasoning Effort Bar */}
             <div className="reasoning-bar">
               <div className="reasoning-label">
-                <Sliders size={14} color="#a1a1aa" />
+                <Sliders size={14} color="#a1a1a1" />
                 <span>Reasoning Effort</span>
               </div>
               <div className="reasoning-options">
@@ -537,11 +537,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     style={{
                       border:
                         effortMode === opt
-                          ? '1px solid #52525b'
-                          : '1px solid #27272a',
+                          ? '1px solid #3d3d3d'
+                          : '1px solid #262626',
                       backgroundColor:
-                        effortMode === opt ? '#27272c' : '#121215',
-                      color: effortMode === opt ? '#f4f4f5' : '#9e9ea7',
+                        effortMode === opt ? '#191919' : '#0a0a0a',
+                      color: effortMode === opt ? '#ededed' : '#a1a1a1',
                     }}
                   >
                     {opt}
@@ -669,7 +669,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {/* Providers List */}
               <div className="provider-list">
                 <div className="provider-search">
-                  <Search size={13} color="#71717a" />
+                  <Search size={13} color="#7d7d7d" />
                   <input
                     placeholder="Search providers..."
                     value={providerSearch}
@@ -685,8 +685,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       className="provider-item"
                       style={{
                         backgroundColor:
-                          p.id === currentProvider?.id ? '#202026' : 'transparent',
-                        color: p.id === currentProvider?.id ? '#f4f4f5' : '#a1a1aa',
+                          p.id === currentProvider?.id ? '#191919' : 'transparent',
+                        color: p.id === currentProvider?.id ? '#ededed' : '#a1a1a1',
                       }}
                     >
                       <span className="provider-item-name">{p.name}</span>
@@ -706,7 +706,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <div style={{ fontSize: 14, fontWeight: 600 }}>
                         {currentProvider.name}
                       </div>
-                      <div style={{ fontSize: 11, color: '#71717a', fontFamily: 'JetBrains Mono, monospace' }}>
+                      <div style={{ fontSize: 11, color: '#7d7d7d', fontFamily: 'JetBrains Mono, monospace' }}>
                         ID: {currentProvider.id}
                       </div>
                     </div>
@@ -770,7 +770,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   {/* Model Search & Auto-Fetch */}
                   <div>
                     <div className="models-header">
-                      <label style={{ fontSize: 11.5, color: '#d4d4d8', fontWeight: 500 }}>
+                      <label style={{ fontSize: 11.5, color: '#d4d4d4', fontWeight: 500 }}>
                         Models ({filteredModels.length})
                       </label>
                       <button
@@ -802,7 +802,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           className="model-item"
                           style={{
                             backgroundColor:
-                              editSelectedModel === m.id ? '#23232a' : 'transparent',
+                              editSelectedModel === m.id ? '#191919' : 'transparent',
                           }}
                         >
                           <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>
@@ -814,8 +814,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 style={{
                                   padding: '1px 5px',
                                   borderRadius: 4,
-                                  backgroundColor: '#18181c',
-                                  border: '1px solid #2b2b33',
+                                  backgroundColor: '#000000',
+                                  border: '1px solid #262626',
                                 }}
                               >
                                 {m.contextWindowFormatted}
@@ -827,8 +827,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 style={{
                                   padding: '1px 5px',
                                   borderRadius: 4,
-                                  backgroundColor: '#18181c',
-                                  border: '1px solid #2b2b33',
+                                  backgroundColor: '#000000',
+                                  border: '1px solid #262626',
                                   display: 'inline-flex',
                                   alignItems: 'center',
                                   gap: 3,
@@ -844,7 +844,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                       ))}
                       {filteredModels.length === 0 && (
-                        <div style={{ padding: 8, fontSize: 11.5, color: '#71717a' }}>
+                        <div style={{ padding: 8, fontSize: 11.5, color: '#7d7d7d' }}>
                           No models matched. You can enter a model ID manually below or click Fetch Models.
                         </div>
                       )}

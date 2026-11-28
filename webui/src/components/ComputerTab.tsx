@@ -108,14 +108,14 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
           <div
             style={{
               padding: '8px 12px',
-              borderBottom: '1px solid #1f1f24',
+              borderBottom: '1px solid #1f1f1f',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              backgroundColor: '#121215',
+              backgroundColor: '#000000',
             }}
           >
-            <div style={{ fontSize: 12, fontFamily: 'JetBrains Mono, monospace', color: '#d4d4d8', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 12, fontFamily: 'JetBrains Mono, monospace', color: '#d4d4d4', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {filePath}
             </div>
             {(isMarkdown || isHtmlOrSvg) && (
@@ -126,7 +126,7 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
                   style={{
                     padding: '3px 8px',
                     fontSize: 11,
-                    backgroundColor: viewMode === 'preview' ? '#27272f' : '#16161a',
+                    backgroundColor: viewMode === 'preview' ? '#121212' : '#0a0a0a',
                   }}
                   onClick={() => setViewMode('preview')}
                 >
@@ -139,7 +139,7 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
                   style={{
                     padding: '3px 8px',
                     fontSize: 11,
-                    backgroundColor: viewMode === 'raw' ? '#27272f' : '#16161a',
+                    backgroundColor: viewMode === 'raw' ? '#121212' : '#0a0a0a',
                   }}
                   onClick={() => setViewMode('raw')}
                 >
@@ -161,9 +161,9 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
                   style={{
                     width: '100%',
                     height: '100%',
-                    border: '1px solid #27272a',
+                    border: '1px solid #262626',
                     borderRadius: 6,
-                    backgroundColor: '#ffffff',
+                    backgroundColor: '#ededed',
                   }}
               />
             ) : (
@@ -173,7 +173,7 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
                   fontFamily: 'JetBrains Mono, monospace',
                   fontSize: 12,
                   lineHeight: 1.55,
-                  color: '#e4e4e7',
+                  color: '#ededed',
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word',
                 }}
@@ -192,7 +192,7 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
       const newStr = String(args.new_string || '');
       return (
         <div style={{ padding: 14, overflowY: 'auto', height: '100%', fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}>
-          <div style={{ marginBottom: 10, color: '#a1a1aa' }}>
+          <div style={{ marginBottom: 10, color: '#a1a1a1' }}>
             File: {args.file_path}
           </div>
           <div style={{ marginBottom: 12 }}>
@@ -242,9 +242,9 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
         <div style={{ padding: 14, overflowY: 'auto', height: '100%', fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}>
           {patchLines.map((line, idx) => {
             let bg = 'transparent';
-            let color = '#d4d4d8';
+            let color = '#d4d4d4';
             if (line.startsWith('***')) {
-              color = '#60a5fa';
+              color = '#ededed';
             } else if (line.startsWith('@@')) {
               color = '#c084fc';
             } else if (line.startsWith('+')) {
@@ -278,7 +278,7 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
         <div
           style={{
             height: '100%',
-            backgroundColor: '#09090b',
+            backgroundColor: '#000000',
             padding: 14,
             overflowY: 'auto',
             fontFamily: 'JetBrains Mono, monospace',
@@ -287,11 +287,11 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
           }}
         >
           <div style={{ color: '#22c55e', marginBottom: 8 }}>
-            <span style={{ color: '#60a5fa' }}>{res.cwd || 'workspace'}</span> ${' '}
-            <span style={{ color: '#f4f4f5', fontWeight: 500 }}>{args.command}</span>
+            <span style={{ color: '#ededed' }}>{res.cwd || 'workspace'}</span> ${' '}
+            <span style={{ color: '#ededed', fontWeight: 500 }}>{args.command}</span>
           </div>
           {res.stdout && (
-            <pre style={{ margin: 0, color: '#e4e4e7', whiteSpace: 'pre-wrap' }}>
+            <pre style={{ margin: 0, color: '#ededed', whiteSpace: 'pre-wrap' }}>
               {res.stdout}
             </pre>
           )}
@@ -314,7 +314,7 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
       const items = res.items || res.files || [];
       return (
         <div style={{ padding: 14, overflowY: 'auto', height: '100%' }}>
-          <div style={{ fontSize: 12, color: '#a1a1aa', marginBottom: 10, fontFamily: 'JetBrains Mono, monospace' }}>
+          <div style={{ fontSize: 12, color: '#a1a1a1', marginBottom: 10, fontFamily: 'JetBrains Mono, monospace' }}>
             Directory: {res.directory || res.directory_path || args.path || args.directory_path}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -327,21 +327,21 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
                   justifyContent: 'space-between',
                   padding: '5px 8px',
                   borderRadius: 6,
-                  backgroundColor: '#141418',
+                  backgroundColor: '#000000',
                   fontSize: 12,
                   fontFamily: 'JetBrains Mono, monospace',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   {item.type === 'directory' ? (
-                    <Folder size={13} color="#60a5fa" />
+                    <Folder size={13} color="#ededed" />
                   ) : (
-                    <FileText size={13} color="#a1a1aa" />
+                    <FileText size={13} color="#a1a1a1" />
                   )}
                   <span>{item.name || item.path}</span>
                 </div>
                 {item.size !== undefined && (
-                  <span style={{ fontSize: 11, color: '#71717a' }}>{item.size} B</span>
+                  <span style={{ fontSize: 11, color: '#7d7d7d' }}>{item.size} B</span>
                 )}
               </div>
             ))}
@@ -355,21 +355,21 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
       const matches = res.matches || [];
       return (
         <div style={{ padding: 14, overflowY: 'auto', height: '100%', fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}>
-          <div style={{ marginBottom: 10, color: '#a1a1aa' }}>
-            Pattern: <span style={{ color: '#f4f4f5' }}>{args.pattern}</span> ({matches.length} matches)
+          <div style={{ marginBottom: 10, color: '#a1a1a1' }}>
+            Pattern: <span style={{ color: '#ededed' }}>{args.pattern}</span> ({matches.length} matches)
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {matches.map((m: any, idx: number) =>
               typeof m === 'string' ? (
-                <div key={idx} style={{ padding: '4px 8px', backgroundColor: '#141418', borderRadius: 5 }}>
+                <div key={idx} style={{ padding: '4px 8px', backgroundColor: '#000000', borderRadius: 5 }}>
                   {m}
                 </div>
               ) : (
-                <div key={idx} style={{ padding: 8, backgroundColor: '#141418', borderRadius: 6, border: '1px solid #222228' }}>
-                  <div style={{ color: '#60a5fa', fontSize: 11, marginBottom: 4 }}>
+                <div key={idx} style={{ padding: 8, backgroundColor: '#000000', borderRadius: 6, border: '1px solid #262626' }}>
+                  <div style={{ color: '#ededed', fontSize: 11, marginBottom: 4 }}>
                     {m.file}:{m.line || m.start_line}
                   </div>
-                  <pre style={{ margin: 0, color: '#e4e4e7', whiteSpace: 'pre-wrap' }}>
+                  <pre style={{ margin: 0, color: '#ededed', whiteSpace: 'pre-wrap' }}>
                     {m.text || m.snippet}
                   </pre>
                 </div>
@@ -385,11 +385,11 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
       const imgSrc = res.data_url || res.source || args.file_path || args.image_path || args.image_source;
       return (
         <div style={{ padding: 14, overflowY: 'auto', height: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ fontSize: 12, fontFamily: 'JetBrains Mono, monospace', color: '#a1a1aa' }}>
+          <div style={{ fontSize: 12, fontFamily: 'JetBrains Mono, monospace', color: '#a1a1a1' }}>
             Source: {args.file_path || args.image_path || args.image_source}
           </div>
           {imgSrc && (
-            <div style={{ backgroundColor: '#141418', padding: 10, borderRadius: 8, border: '1px solid #25252c', textAlign: 'center' }}>
+            <div style={{ backgroundColor: '#000000', padding: 10, borderRadius: 8, border: '1px solid #262626', textAlign: 'center' }}>
               <img
                 src={imgSrc}
                 alt="Tool Visual Inspection"
@@ -400,16 +400,16 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
             </div>
           )}
           {res.decoded_text && (
-            <div style={{ padding: 10, backgroundColor: '#141418', borderRadius: 6, border: '1px solid #27272f' }}>
-              <div style={{ fontSize: 11, color: '#9e9ea7', marginBottom: 4 }}>Decoded QR Data:</div>
+            <div style={{ padding: 10, backgroundColor: '#000000', borderRadius: 6, border: '1px solid #262626' }}>
+              <div style={{ fontSize: 11, color: '#a1a1a1', marginBottom: 4 }}>Decoded QR Data:</div>
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12.5, color: '#4ade80' }}>
                 {res.decoded_text}
               </div>
             </div>
           )}
           {res.text !== undefined && (
-            <div style={{ padding: 10, backgroundColor: '#141418', borderRadius: 6, border: '1px solid #27272f' }}>
-              <div style={{ fontSize: 11, color: '#9e9ea7', marginBottom: 4 }}>Extracted OCR Text:</div>
+            <div style={{ padding: 10, backgroundColor: '#000000', borderRadius: 6, border: '1px solid #262626' }}>
+              <div style={{ fontSize: 11, color: '#a1a1a1', marginBottom: 4 }}>Extracted OCR Text:</div>
               <pre style={{ margin: 0, fontFamily: 'JetBrains Mono, monospace', fontSize: 12, whiteSpace: 'pre-wrap' }}>
                 {res.text}
               </pre>
@@ -422,8 +422,8 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
     // 8. archive_files, extract_archive, and any other tool
     return (
       <div style={{ padding: 14, overflowY: 'auto', height: '100%', fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}>
-        <div style={{ marginBottom: 10, color: '#a1a1aa' }}>Tool: {tool}</div>
-        <pre style={{ margin: 0, padding: 10, backgroundColor: '#141418', borderRadius: 6, whiteSpace: 'pre-wrap' }}>
+        <div style={{ marginBottom: 10, color: '#a1a1a1' }}>Tool: {tool}</div>
+        <pre style={{ margin: 0, padding: 10, backgroundColor: '#000000', borderRadius: 6, whiteSpace: 'pre-wrap' }}>
           {JSON.stringify({ arguments: args, output: res }, null, 2)}
         </pre>
       </div>
@@ -465,7 +465,7 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* Left mini timeline of tool calls */}
         <div className="computer-timeline">
-          <div style={{ fontSize: 10.5, color: '#64646c', padding: '2px 6px 6px 6px', fontWeight: 600 }}>
+          <div style={{ fontSize: 10.5, color: '#7d7d7d', padding: '2px 6px 6px 6px', fontWeight: 600 }}>
             AGENT ACTIONS ({activities.length})
           </div>
           {activities.map((act) => (
@@ -487,8 +487,8 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
                 borderRadius: 6,
                 border: 'none',
                 backgroundColor:
-                  activeActivity?.id === act.id ? '#1e1e24' : 'transparent',
-                color: activeActivity?.id === act.id ? '#f4f4f5' : '#9e9ea7',
+                  activeActivity?.id === act.id ? '#191919' : 'transparent',
+                color: activeActivity?.id === act.id ? '#ededed' : '#a1a1a1',
                 fontSize: 11.5,
                 cursor: 'pointer',
                 display: 'flex',
@@ -507,7 +507,7 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
             </button>
           ))}
           {activities.length === 0 && (
-            <div style={{ padding: 8, fontSize: 11, color: '#64646c' }}>
+            <div style={{ padding: 8, fontSize: 11, color: '#7d7d7d' }}>
               No agent tool activity yet.
             </div>
           )}
@@ -524,7 +524,7 @@ export const ComputerTab: React.FC<ComputerTabProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#64646c',
+                color: '#7d7d7d',
                 fontSize: 12.5,
               }}
             >

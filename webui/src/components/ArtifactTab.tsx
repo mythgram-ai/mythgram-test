@@ -66,7 +66,7 @@ export const ArtifactTab: React.FC<ArtifactTabProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#64646c',
+            color: '#7d7d7d',
             fontSize: 12.5,
             padding: 16,
             textAlign: 'center',
@@ -87,7 +87,7 @@ export const ArtifactTab: React.FC<ArtifactTabProps> = ({
             width: '100%',
             height: '100%',
             border: 'none',
-            backgroundColor: '#ffffff',
+            backgroundColor: '#ededed',
           }}
           sandbox="allow-scripts allow-same-origin"
         />
@@ -117,8 +117,8 @@ export const ArtifactTab: React.FC<ArtifactTabProps> = ({
       <div
         style={{
           padding: '8px 10px',
-          borderBottom: '1px solid #1e1e22',
-          backgroundColor: '#121215',
+          borderBottom: '1px solid #1f1f1f',
+          backgroundColor: '#000000',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -126,7 +126,7 @@ export const ArtifactTab: React.FC<ArtifactTabProps> = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
-          <Layers size={13} color="#60a5fa" />
+          <Layers size={13} color="#ededed" />
           <select
             className="input-field"
             style={{ padding: '4px 8px', fontSize: 12 }}
@@ -155,7 +155,7 @@ export const ArtifactTab: React.FC<ArtifactTabProps> = ({
       </div>
 
       {/* Rendered Content Only */}
-      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', backgroundColor: '#09090b' }}>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', backgroundColor: '#000000' }}>
         {renderRenderedContentOnly()}
       </div>
     </div>

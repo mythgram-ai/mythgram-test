@@ -196,7 +196,7 @@ export async function runSingleSubAgent(
 
     try {
       while (!abortController.signal.aborted) {
-        const providerCreds = getProviderRuntimeCredentials(providerId);
+        const providerCreds = getProviderRuntimeCredentials(providerId, modelId);
         if (visionSupported === null) visionSupported = providerCreds.visionSupport;
 
         const subSystemPrompt = `${subAgentDef.system_prompt}

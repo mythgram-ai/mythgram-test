@@ -92,8 +92,8 @@ export const SlidesPage: React.FC<SlidesPageProps> = ({
         <div
           style={{
             width: 'clamp(230px, 30%, 320px)',
-            borderRight: '1px solid #1e1e22',
-            backgroundColor: '#0c0c0f',
+            borderRight: '1px solid #1f1f1f',
+            backgroundColor: '#000000',
             display: 'flex',
             flexDirection: 'column',
             overflowY: 'auto',
@@ -101,11 +101,11 @@ export const SlidesPage: React.FC<SlidesPageProps> = ({
             gap: 6,
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#71717a', padding: '4px 6px' }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#7d7d7d', padding: '4px 6px' }}>
             CREATED SLIDE PROJECTS ({projects.length})
           </div>
           {!loading && projects.length === 0 && (
-            <div style={{ padding: 10, fontSize: 12, color: '#64646c' }}>
+            <div style={{ padding: 10, fontSize: 12, color: '#7d7d7d' }}>
               No slide decks created yet. Ask the agent to create slides and it will organize and present them here.
             </div>
           )}
@@ -117,15 +117,15 @@ export const SlidesPage: React.FC<SlidesPageProps> = ({
                 padding: '10px 12px',
                 borderRadius: 8,
                 cursor: 'pointer',
-                backgroundColor: selectedId === p.id ? '#1c1c22' : '#131317',
+                backgroundColor: selectedId === p.id ? '#0a0a0a' : '#000000',
                 border:
                   selectedId === p.id
-                    ? '1px solid #383842'
-                    : '1px solid #1f1f25',
+                    ? '1px solid #1f1f1f'
+                    : '1px solid #1f1f1f',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: 600, fontSize: 12.5, color: '#f4f4f5' }}>
+                <span style={{ fontWeight: 600, fontSize: 12.5, color: '#ededed' }}>
                   {p.name}
                 </span>
                 <button
@@ -140,7 +140,7 @@ export const SlidesPage: React.FC<SlidesPageProps> = ({
                   <Trash2 size={12} />
                 </button>
               </div>
-              <div style={{ fontSize: 11, color: '#9e9ea7', marginTop: 4 }}>
+              <div style={{ fontSize: 11, color: '#a1a1a1', marginTop: 4 }}>
                 {p.slides_count} slide(s) • ID: {p.id}
               </div>
             </div>
@@ -161,7 +161,7 @@ export const SlidesPage: React.FC<SlidesPageProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#64646c',
+                color: '#7d7d7d',
                 fontSize: 13,
               }}
             >

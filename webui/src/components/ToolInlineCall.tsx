@@ -131,8 +131,8 @@ const ConnectorConnectCard: React.FC<{
         marginTop: 8,
         padding: 14,
         borderRadius: 10,
-        backgroundColor: '#141419',
-        border: '1px solid #3b82f6',
+        backgroundColor: '#000000',
+        border: '1px solid #ededed',
         display: 'flex',
         flexDirection: 'column',
         gap: 10,
@@ -144,8 +144,8 @@ const ConnectorConnectCard: React.FC<{
             width: 36,
             height: 36,
             borderRadius: 8,
-            backgroundColor: '#0f0f13',
-            border: '1px solid #27272a',
+            backgroundColor: '#000000',
+            border: '1px solid #262626',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -164,10 +164,10 @@ const ConnectorConnectCard: React.FC<{
           )}
         </span>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span style={{ fontSize: 13.5, fontWeight: 600, color: '#f4f4f5' }}>
+          <span style={{ fontSize: 13.5, fontWeight: 600, color: '#ededed' }}>
             Connect {data.name || data.connector_name}
           </span>
-          <span style={{ fontSize: 11.5, color: '#9e9ea7' }}>
+          <span style={{ fontSize: 11.5, color: '#a1a1a1' }}>
             {data.description || 'Authorize this application to give the agent access.'}
           </span>
         </div>
@@ -190,7 +190,7 @@ const ConnectorConnectCard: React.FC<{
           <span
             style={{
               fontSize: 11.5,
-              color: phase === 'error' || phase === 'timeout' ? '#f87171' : '#9e9ea7',
+              color: phase === 'error' || phase === 'timeout' ? '#f87171' : '#a1a1a1',
             }}
           >
             {message}
@@ -473,14 +473,14 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
                     gap: 8,
                     padding: '6px 10px',
                     borderRadius: 8,
-                    backgroundColor: '#141418',
-                    border: '1px solid #27272f',
+                    backgroundColor: '#000000',
+                    border: '1px solid #262626',
                     fontSize: 12,
                   }}
                 >
-                  <Paperclip size={13} color="#60a5fa" />
-                  <span style={{ fontWeight: 500, color: '#f4f4f5' }}>{f.name}</span>
-                  <span style={{ fontSize: 11, color: '#71717a' }}>{f.size} B</span>
+                  <Paperclip size={13} color="#ededed" />
+                  <span style={{ fontWeight: 500, color: '#ededed' }}>{f.name}</span>
+                  <span style={{ fontSize: 11, color: '#7d7d7d' }}>{f.size} B</span>
                   <button
                     type="button"
                     className="btn-secondary inline-center"
@@ -513,8 +513,8 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
                   margin: 0,
                   padding: 10,
                   borderRadius: 6,
-                  backgroundColor: '#0c0c0f',
-                  border: '1px solid #23232b',
+                  backgroundColor: '#000000',
+                  border: '1px solid #262626',
                   maxHeight: 240,
                   overflowY: 'auto',
                   fontSize: 11.5,
@@ -545,15 +545,15 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
                       gap: 8,
                       padding: '7px 11px',
                       borderRadius: 8,
-                      backgroundColor: '#15151c',
-                      border: '1px solid #2d2d3a',
-                      color: '#f4f4f5',
+                      backgroundColor: '#121212',
+                      border: '1px solid #262626',
+                      color: '#ededed',
                       fontSize: 12,
                       cursor: 'pointer',
                     }}
                     title="Click to open live Sub-Agent stream tab"
                   >
-                    <Bot size={14} color="#60a5fa" />
+                    <Bot size={14} color="#ededed" />
                     <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
                       {run.agent_name}
                     </span>
@@ -582,12 +582,12 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
                       gap: 6,
                       padding: '5px 10px',
                       borderRadius: 6,
-                      backgroundColor: '#15151c',
-                      border: '1px solid #272730',
+                      backgroundColor: '#121212',
+                      border: '1px solid #262626',
                       fontSize: 12,
                     }}
                   >
-                    <Bot size={13} color="#60a5fa" />
+                    <Bot size={13} color="#ededed" />
                     <span>{a.agent}</span>
                   </span>
                 ))}
@@ -607,7 +607,7 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
                 style={{ padding: '4px 10px', fontSize: 11.5 }}
                 onClick={() => onOpenArtifactTab(artId)}
               >
-                <Layers size={12} color="#60a5fa" />
+                <Layers size={12} color="#ededed" />
                 Open Artifact in Tab ({parsedResult.title || parsedArgs.title || artId})
               </button>
             </div>
@@ -630,7 +630,7 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
                 style={{ padding: '4px 10px', fontSize: 11.5 }}
                 onClick={() => onOpenSlidesTab(projId)}
               >
-                <Presentation size={12} color="#60a5fa" />
+                <Presentation size={12} color="#ededed" />
                 Open Slides Deck ({projId})
               </button>
             </div>
@@ -649,7 +649,7 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
               style={{ padding: '4px 10px', fontSize: 11.5 }}
               onClick={() => onOpenBrowserTab?.(u)}
             >
-              <Globe size={12} color="#60a5fa" />
+              <Globe size={12} color="#ededed" />
               Open Embedded URL ({u})
             </button>
           </div>
@@ -669,8 +669,8 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
                 marginTop: 6,
                 padding: '8px 12px',
                 borderRadius: 8,
-                backgroundColor: '#121216',
-                border: '1px solid #23232b',
+                backgroundColor: '#000000',
+                border: '1px solid #262626',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 5,
@@ -684,7 +684,7 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
                     alignItems: 'center',
                     gap: 8,
                     fontSize: 12,
-                    color: t.status === 'completed' ? '#71717a' : '#e4e4e7',
+                    color: t.status === 'completed' ? '#7d7d7d' : '#ededed',
                     textDecoration:
                       t.status === 'completed' ? 'line-through' : 'none',
                   }}
@@ -699,7 +699,7 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
                           ? '#22c55e'
                           : t.status === 'in_progress'
                           ? '#eab308'
-                          : '#52525b',
+                          : '#262626',
                     }}
                   />
                   <span style={{ flex: 1 }}>{t.content}</span>
@@ -708,8 +708,8 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
                       fontSize: 10,
                       padding: '1px 5px',
                       borderRadius: 4,
-                      backgroundColor: '#1c1c22',
-                      color: '#9e9ea7',
+                      backgroundColor: '#000000',
+                      color: '#a1a1a1',
                     }}
                   >
                     {t.priority}
@@ -740,19 +740,19 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
               marginTop: 8,
               padding: 12,
               borderRadius: 10,
-              backgroundColor: '#141419',
-              border: '1px solid #3b82f6',
+              backgroundColor: '#000000',
+              border: '1px solid #ededed',
               display: 'flex',
               flexDirection: 'column',
               gap: 10,
             }}
           >
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: '#60a5fa' }}>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: '#ededed' }}>
               Information Requested by Agent
             </div>
             {items.map((item: any, idx: number) => (
               <div key={idx}>
-                <label className="field-label" style={{ color: '#e4e4e7' }}>
+                <label className="field-label" style={{ color: '#ededed' }}>
                   {item.request}
                 </label>
                 <input
@@ -813,8 +813,8 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
               marginTop: 8,
               padding: 12,
               borderRadius: 10,
-              backgroundColor: '#141419',
-              border: '1px solid #3b82f6',
+              backgroundColor: '#000000',
+              border: '1px solid #ededed',
               display: 'flex',
               flexDirection: 'column',
               gap: 12,
@@ -825,11 +825,11 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
                 selectedOptions[qIdx] ?? q.options?.[0] ?? '';
               return (
                 <div key={qIdx} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#f4f4f5' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#ededed' }}>
                     {q.question}
                   </div>
                   {q.context && (
-                    <div style={{ fontSize: 11.5, color: '#9e9ea7' }}>
+                    <div style={{ fontSize: 11.5, color: '#a1a1a1' }}>
                       {q.context}
                     </div>
                   )}
@@ -847,12 +847,12 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
                           fontSize: 12,
                           cursor: 'pointer',
                           backgroundColor:
-                            currentSelection === opt ? '#2563eb' : '#1c1c24',
+                            currentSelection === opt ? '#ededed' : '#121212',
                           border:
                             currentSelection === opt
-                              ? '1px solid #60a5fa'
-                              : '1px solid #2d2d38',
-                          color: '#f4f4f5',
+                              ? '1px solid #ededed'
+                              : '1px solid #262626',
+                          color: '#ededed',
                         }}
                       >
                         {opt}
@@ -873,13 +873,13 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
                         cursor: 'pointer',
                         backgroundColor:
                           currentSelection === '__custom__'
-                            ? '#2563eb'
-                            : '#1c1c24',
+                            ? '#ededed'
+                            : '#121212',
                         border:
                           currentSelection === '__custom__'
-                            ? '1px solid #60a5fa'
-                            : '1px solid #2d2d38',
-                        color: '#f4f4f5',
+                            ? '1px solid #ededed'
+                            : '1px solid #262626',
+                        color: '#ededed',
                       }}
                     >
                       Custom Answer...
@@ -925,14 +925,14 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
               marginTop: 8,
               padding: 14,
               borderRadius: 10,
-              backgroundColor: '#131318',
-              border: matchingPending ? '1px solid #3b82f6' : '1px solid #272730',
+              backgroundColor: '#000000',
+              border: matchingPending ? '1px solid #ededed' : '1px solid #262626',
               display: 'flex',
               flexDirection: 'column',
               gap: 10,
             }}
           >
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: '#60a5fa' }}>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: '#ededed' }}>
               Implementation Plan Submitted for Review
             </div>
             {editingPlan ? (
@@ -1026,7 +1026,7 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
             {getToolIcon(activity.tool_name)}
             <span>{summary}</span>
             {activity.status === 'running' && (
-              <span style={{ color: '#a1a1aa', fontSize: 11 }}>(running...)</span>
+              <span style={{ color: '#a1a1a1', fontSize: 11 }}>(running...)</span>
             )}
             {activity.status === 'error' && (
               <span style={{ color: '#f87171', fontSize: 11 }}>(error)</span>
@@ -1039,7 +1039,7 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: '#64646c',
+                color: '#7d7d7d',
                 fontSize: 11,
                 cursor: 'pointer',
               }}
@@ -1054,7 +1054,7 @@ export const ToolInlineCall: React.FC<ToolInlineCallProps> = React.memo(
 
         {expanded && (
           <div className="tool-inline-dropdown">
-            <div style={{ marginBottom: 4, color: '#71717a' }}>
+            <div style={{ marginBottom: 4, color: '#7d7d7d' }}>
               Arguments: {activity.args_json}
             </div>
             <div>

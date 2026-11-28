@@ -40,8 +40,8 @@ const CONFIG_SNIPPET = `{
 }`;
 
 const cardStyle: React.CSSProperties = {
-  backgroundColor: '#0f0f13',
-  border: '1px solid #1f1f25',
+  backgroundColor: '#000000',
+  border: '1px solid #1f1f1f',
   borderRadius: 12,
   padding: 16,
 };
@@ -54,8 +54,8 @@ const modeRowStyle = (selected: boolean): React.CSSProperties => ({
   textAlign: 'left',
   padding: '10px 12px',
   borderRadius: 9,
-  border: `1px solid ${selected ? '#3a3a46' : '#1f1f25'}`,
-  backgroundColor: selected ? '#1c1c22' : '#131317',
+  border: `1px solid ${selected ? '#303030' : '#1f1f1f'}`,
+  backgroundColor: selected ? '#000000' : '#000000',
   color: 'inherit',
   cursor: 'pointer',
 });
@@ -172,8 +172,8 @@ export const AcpPage: React.FC<AcpPageProps> = ({ onOpenSettings, onOpenSidebar 
           )}
 
           <section style={cardStyle}>
-            <h2 style={{ margin: 0, fontSize: 15, color: '#f4f4f5' }}>Connect an ACP client</h2>
-            <p style={{ margin: '6px 0 12px', fontSize: 12.5, color: '#9e9ea7', lineHeight: 1.5 }}>
+            <h2 style={{ margin: 0, fontSize: 15, color: '#ededed' }}>Connect an ACP client</h2>
+            <p style={{ margin: '6px 0 12px', fontSize: 12.5, color: '#a1a1a1', lineHeight: 1.5 }}>
               Mythgram speaks the Agent Client Protocol over stdio. Add this server to any ACP
               compatible editor (Zed, JetBrains, Neovim, and others).
             </p>
@@ -183,9 +183,9 @@ export const AcpPage: React.FC<AcpPageProps> = ({ onOpenSettings, onOpenSidebar 
                   margin: 0,
                   padding: '12px 14px',
                   borderRadius: 9,
-                  backgroundColor: '#08080a',
-                  border: '1px solid #1f1f25',
-                  color: '#d4d4d8',
+                  backgroundColor: '#000000',
+                  border: '1px solid #1f1f1f',
+                  color: '#d4d4d4',
                   fontFamily: "'JetBrains Mono', monospace",
                   fontSize: 12,
                   lineHeight: 1.55,
@@ -204,20 +204,20 @@ export const AcpPage: React.FC<AcpPageProps> = ({ onOpenSettings, onOpenSidebar 
                 <span>{copied ? 'Copied' : 'Copy'}</span>
               </button>
             </div>
-            <p style={{ margin: '10px 0 0', fontSize: 11.5, color: '#64646c', lineHeight: 1.5 }}>
+            <p style={{ margin: '10px 0 0', fontSize: 11.5, color: '#7d7d7d', lineHeight: 1.5 }}>
               The server starts on demand. No port, no login: the client launches{' '}
-              <code style={{ color: '#a1a1aa' }}>npx --yes mythgram</code> and talks JSON-RPC over
+              <code style={{ color: '#a1a1a1' }}>npx --yes mythgram</code> and talks JSON-RPC over
               stdin/stdout.
             </p>
           </section>
 
           <section style={cardStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Bot size={15} style={{ color: '#a1a1aa' }} />
-              <h2 style={{ margin: 0, fontSize: 15, color: '#f4f4f5' }}>Agent</h2>
-              {saving && <Loader2 size={13} className="spin" style={{ color: '#71717a' }} />}
+              <Bot size={15} style={{ color: '#a1a1a1' }} />
+              <h2 style={{ margin: 0, fontSize: 15, color: '#ededed' }}>Agent</h2>
+              {saving && <Loader2 size={13} className="spin" style={{ color: '#7d7d7d' }} />}
             </div>
-            <p style={{ margin: '6px 0 12px', fontSize: 12.5, color: '#9e9ea7', lineHeight: 1.5 }}>
+            <p style={{ margin: '6px 0 12px', fontSize: 12.5, color: '#a1a1a1', lineHeight: 1.5 }}>
               Pick the agent ACP sessions start with. Clients can still switch modes per session.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -232,7 +232,7 @@ export const AcpPage: React.FC<AcpPageProps> = ({ onOpenSettings, onOpenSidebar 
                     width: 16,
                     height: 16,
                     borderRadius: '50%',
-                    border: `1px solid ${agentMode === 'default' ? '#4ade80' : '#3a3a46'}`,
+                    border: `1px solid ${agentMode === 'default' ? '#4ade80' : '#303030'}`,
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -251,10 +251,10 @@ export const AcpPage: React.FC<AcpPageProps> = ({ onOpenSettings, onOpenSidebar 
                   )}
                 </span>
                 <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'block', fontSize: 12.5, color: '#f4f4f5', fontWeight: 600 }}>
+                  <span style={{ display: 'block', fontSize: 12.5, color: '#ededed', fontWeight: 600 }}>
                     Default Mythgram agent
                   </span>
-                  <span style={{ display: 'block', fontSize: 11, color: '#9e9ea7', marginTop: 2 }}>
+                  <span style={{ display: 'block', fontSize: 11, color: '#a1a1a1', marginTop: 2 }}>
                     Full runtime and every tool.
                   </span>
                 </span>
@@ -273,7 +273,7 @@ export const AcpPage: React.FC<AcpPageProps> = ({ onOpenSettings, onOpenSidebar 
                       width: 16,
                       height: 16,
                       borderRadius: '50%',
-                      border: `1px solid ${agentMode === agent.id ? '#4ade80' : '#3a3a46'}`,
+                      border: `1px solid ${agentMode === agent.id ? '#4ade80' : '#303030'}`,
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -292,10 +292,10 @@ export const AcpPage: React.FC<AcpPageProps> = ({ onOpenSettings, onOpenSidebar 
                     )}
                   </span>
                   <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: 'block', fontSize: 12.5, color: '#f4f4f5', fontWeight: 600 }}>
+                    <span style={{ display: 'block', fontSize: 12.5, color: '#ededed', fontWeight: 600 }}>
                       {agent.name}
                     </span>
-                    <span style={{ display: 'block', fontSize: 11, color: '#9e9ea7', marginTop: 2 }}>
+                    <span style={{ display: 'block', fontSize: 11, color: '#a1a1a1', marginTop: 2 }}>
                       {agent.description || 'Custom Mythgram agent.'}
                     </span>
                   </span>
@@ -303,7 +303,7 @@ export const AcpPage: React.FC<AcpPageProps> = ({ onOpenSettings, onOpenSidebar 
               ))}
 
               {!loading && customAgents.length === 0 && (
-                <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#64646c' }}>
+                <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#7d7d7d' }}>
                   No custom agents yet. Create one on the Custom Agents page to use it here.
                 </p>
               )}
@@ -312,10 +312,10 @@ export const AcpPage: React.FC<AcpPageProps> = ({ onOpenSettings, onOpenSidebar 
 
           <section style={cardStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Cpu size={15} style={{ color: '#a1a1aa' }} />
-              <h2 style={{ margin: 0, fontSize: 15, color: '#f4f4f5' }}>Provider</h2>
+              <Cpu size={15} style={{ color: '#a1a1a1' }} />
+              <h2 style={{ margin: 0, fontSize: 15, color: '#ededed' }}>Provider</h2>
             </div>
-            <p style={{ margin: '6px 0 10px', fontSize: 12.5, color: '#9e9ea7', lineHeight: 1.5 }}>
+            <p style={{ margin: '6px 0 10px', fontSize: 12.5, color: '#a1a1a1', lineHeight: 1.5 }}>
               ACP uses the same provider and model as the WebUI. Change it once in Settings and
               both surfaces stay in sync.
             </p>
@@ -325,19 +325,19 @@ export const AcpPage: React.FC<AcpPageProps> = ({ onOpenSettings, onOpenSidebar 
                 gap: 18,
                 padding: '10px 12px',
                 borderRadius: 9,
-                backgroundColor: '#131317',
-                border: '1px solid #1f1f25',
+                backgroundColor: '#000000',
+                border: '1px solid #1f1f1f',
                 fontFamily: "'JetBrains Mono', monospace",
                 fontSize: 12,
-                color: '#d4d4d8',
+                color: '#d4d4d4',
               }}
             >
               <span>
-                <span style={{ color: '#71717a' }}>provider </span>
+                <span style={{ color: '#7d7d7d' }}>provider </span>
                 {settings?.provider.name || '…'}
               </span>
               <span>
-                <span style={{ color: '#71717a' }}>model </span>
+                <span style={{ color: '#7d7d7d' }}>model </span>
                 {settings?.provider.model || '…'}
               </span>
             </div>

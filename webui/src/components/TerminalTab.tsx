@@ -20,17 +20,17 @@ export const TerminalTab: React.FC<TerminalTabProps> = ({ workspace }) => {
       fontSize: 12.5,
       lineHeight: 1.35,
       theme: {
-        background: '#09090b',
-        foreground: '#e4e4e7',
-        cursor: '#f4f4f5',
-        black: '#18181b',
+        background: '#000000',
+        foreground: '#ededed',
+        cursor: '#ededed',
+        black: '#0a0a0a',
         red: '#ef4444',
         green: '#22c55e',
         yellow: '#eab308',
-        blue: '#3b82f6',
+        blue: '#ededed',
         magenta: '#a855f7',
         cyan: '#06b6d4',
-        white: '#f4f4f5',
+        white: '#ededed',
       },
     });
 
@@ -92,7 +92,7 @@ export const TerminalTab: React.FC<TerminalTabProps> = ({ workspace }) => {
       style={{
         height: '100%',
         width: '100%',
-        backgroundColor: '#09090b',
+        backgroundColor: '#000000',
         padding: 8,
       }}
     >

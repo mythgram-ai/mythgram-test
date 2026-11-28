@@ -1082,7 +1082,7 @@ export const App: React.FC = () => {
           )}
 
           {sessions.length === 0 && (
-            <div style={{ padding: '4px 10px', fontSize: 12, color: '#64646c' }}>
+            <div style={{ padding: '4px 10px', fontSize: 12, color: '#7d7d7d' }}>
               No chat sessions yet.
             </div>
           )}

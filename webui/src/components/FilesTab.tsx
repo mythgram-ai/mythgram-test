@@ -119,20 +119,20 @@ export const FilesTab: React.FC<FilesTabProps> = ({ workspace }) => {
               cursor: 'pointer',
               fontSize: 12,
               backgroundColor:
-                selectedFile === node.path ? '#202027' : 'transparent',
-              color: selectedFile === node.path ? '#f4f4f5' : '#b4b4bd',
+                selectedFile === node.path ? '#191919' : 'transparent',
+              color: selectedFile === node.path ? '#ededed' : '#a1a1a1',
               borderRadius: 5,
             }}
           >
             {isDir ? (
               <>
                 {isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                <Folder size={13} color="#60a5fa" />
+                <Folder size={13} color="#ededed" />
               </>
             ) : (
               <>
                 <span style={{ width: 12 }} />
-                <FileText size={13} color="#9e9ea7" />
+                <FileText size={13} color="#a1a1a1" />
               </>
             )}
             <span className="file-node-name">{node.name}</span>
@@ -151,18 +151,18 @@ export const FilesTab: React.FC<FilesTabProps> = ({ workspace }) => {
       <div
         style={{
           padding: '8px 12px',
-          borderBottom: '1px solid #1e1e22',
+          borderBottom: '1px solid #1f1f1f',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          backgroundColor: '#121215',
+          backgroundColor: '#000000',
         }}
       >
         <span
           style={{
             fontSize: 11.5,
             fontFamily: 'JetBrains Mono, monospace',
-            color: '#a1a1aa',
+            color: '#a1a1a1',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -185,7 +185,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({ workspace }) => {
           className="files-tree-pane"
           style={{
             width: selectedFile ? '42%' : '100%',
-            borderRight: selectedFile ? '1px solid #1e1e22' : 'none',
+            borderRight: selectedFile ? '1px solid #1f1f1f' : 'none',
             overflowY: 'auto',
             padding: 6,
           }}
@@ -200,16 +200,16 @@ export const FilesTab: React.FC<FilesTabProps> = ({ workspace }) => {
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
-              backgroundColor: '#09090b',
+              backgroundColor: '#000000',
             }}
           >
             <div
               style={{
                 padding: '6px 10px',
-                borderBottom: '1px solid #1c1c20',
+                borderBottom: '1px solid #1f1f1f',
                 fontSize: 11,
                 fontFamily: 'JetBrains Mono, monospace',
-                color: '#a1a1aa',
+                color: '#a1a1a1',
                 display: 'flex',
                 justifyContent: 'space-between',
               }}
@@ -223,7 +223,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({ workspace }) => {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#71717a',
+                  color: '#7d7d7d',
                   cursor: 'pointer',
                   fontSize: 11,
                 }}
@@ -240,7 +240,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({ workspace }) => {
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: 11.5,
                 lineHeight: 1.5,
-                color: '#e4e4e7',
+                color: '#ededed',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
               }}

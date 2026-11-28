@@ -52,8 +52,8 @@ export const BrowserTab: React.FC<BrowserTabProps> = ({ embeddedUrl }) => {
           alignItems: 'center',
           gap: 6,
           padding: '8px 10px',
-          borderBottom: '1px solid #1e1e22',
-          backgroundColor: '#121215',
+          borderBottom: '1px solid #1f1f1f',
+          backgroundColor: '#000000',
         }}
       >
         <button
@@ -83,13 +83,13 @@ export const BrowserTab: React.FC<BrowserTabProps> = ({ embeddedUrl }) => {
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            backgroundColor: '#18181c',
-            border: '1px solid #2b2b32',
+            backgroundColor: '#000000',
+            border: '1px solid #262626',
             borderRadius: 6,
             padding: '4px 8px',
           }}
         >
-          <Search size={12} color="#71717a" />
+          <Search size={12} color="#7d7d7d" />
           <input
             className="browser-address-input"
             value={addressInput}
@@ -111,7 +111,7 @@ export const BrowserTab: React.FC<BrowserTabProps> = ({ embeddedUrl }) => {
       </form>
 
       {/* Embedded Browser Viewport */}
-      <div style={{ flex: 1, backgroundColor: '#ffffff', position: 'relative' }}>
+      <div style={{ flex: 1, backgroundColor: '#ededed', position: 'relative' }}>
         <iframe
           key={iframeKey}
           src={currentUrl}

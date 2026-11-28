@@ -14,7 +14,7 @@ import {
   FolderTree,
   Terminal as TerminalIcon,
   PanelRight,
-  Cpu,
+  Gauge,
   Menu,
   X,
   Layers,
@@ -52,6 +52,9 @@ const SubAgentTab = lazy(() =>
 );
 const SlidesTab = lazy(() =>
   import('../components/SlidesTab').then((m) => ({ default: m.SlidesTab }))
+);
+const ContextDashboard = lazy(() =>
+  import('../components/ContextDashboard').then((m) => ({ default: m.ContextDashboard }))
 );
 
 interface MessageItem {
@@ -92,13 +95,6 @@ export type RightTabType =
   | 'artifacts'
   | 'subagents'
   | 'slides';
-
-function formatTokenCount(n: number): string {
-  if (!n || n <= 0) return '0';
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
-}
 
 const UserMessageRow: React.FC<{ msg: MessageItem }> = React.memo(({ msg }) => {
   const displayContent = msg.content.split('\n\n[System Attachment Notice:')[0];
@@ -214,6 +210,9 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   >([]);
   const [contextTokens, setContextTokens] = useState(0);
   const [contextWindow, setContextWindow] = useState(128000);
+  const [sessionModel, setSessionModel] = useState('');
+  const [sessionProvider, setSessionProvider] = useState('');
+  const [contextOpen, setContextOpen] = useState(false);
   const [sessionWorkspace, setSessionWorkspace] = useState(workspace);
 
   // Right Panel State
@@ -265,6 +264,8 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             );
             setContextTokens(data.session.context_tokens || 0);
             setContextWindow(data.session.contextWindow || 128000);
+            if (data.session.model_id) setSessionModel(data.session.model_id);
+            if (data.session.provider_id) setSessionProvider(data.session.provider_id);
             if (data.session.workspace) {
               setSessionWorkspace(data.session.workspace);
             }
@@ -681,6 +682,11 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     setRightTab('browser');
   }, []);
 
+  const contextPct =
+    contextWindow > 0
+      ? Math.min(100, Math.round((contextTokens / contextWindow) * 1000) / 10)
+      : 0;
+
   return (
     <main className="main-canvas">
       {/* Top Bar with Context Usage, Right Panel Toggles, and Settings */}
@@ -701,20 +707,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             <span className="version-block">v1</span>
           </div>
 
-          <div
-            className="topbar-badge"
-            title="Live Context Window Token Usage captured from logs"
-          >
-            <Cpu size={12} />
-            <span className="context-short">
-              {formatTokenCount(contextTokens)}/{formatTokenCount(contextWindow)}
-            </span>
-            <span className="context-full">
-              Context: {formatTokenCount(contextTokens)} /{' '}
-              {formatTokenCount(contextWindow)} tokens
-            </span>
-          </div>
-
           {todos.length > 0 && (
             <div
               className="topbar-badge"
@@ -729,6 +721,19 @@ export const ChatPage: React.FC<ChatPageProps> = ({
         </div>
 
         <div className="topbar-right">
+          <button
+            type="button"
+            className="topbar-btn context-trigger"
+            onClick={() => setContextOpen(true)}
+            title="Open context window dashboard"
+            aria-haspopup="dialog"
+            aria-expanded={contextOpen}
+          >
+            <Gauge size={13} />
+            <span>Context</span>
+            <span className="context-trigger-pct">{contextPct}%</span>
+          </button>
+
           <button
             type="button"
             className={`topbar-btn panel-quick-btn ${
@@ -1078,6 +1083,21 @@ export const ChatPage: React.FC<ChatPageProps> = ({
           </aside>
         )}
       </div>
+
+      {contextOpen && (
+        <Suspense fallback={null}>
+          <ContextDashboard
+            usedTokens={contextTokens}
+            contextWindow={contextWindow}
+            provider={sessionProvider || activeProvider}
+            model={sessionModel || activeModel}
+            messageCount={messages.length}
+            toolCallCount={activities.length}
+            isRunning={isRunning}
+            onClose={() => setContextOpen(false)}
+          />
+        </Suspense>
+      )}
     </main>
   );
 };

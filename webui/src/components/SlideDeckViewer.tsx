@@ -162,13 +162,13 @@ export const SlideDeckViewer: React.FC<SlideDeckViewerProps> = ({
       : '';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#09090b' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#000000' }}>
       {/* Toolbar */}
       <div
         style={{
           padding: '10px 14px',
-          borderBottom: '1px solid #1e1e22',
-          backgroundColor: '#121215',
+          borderBottom: '1px solid #1f1f1f',
+          backgroundColor: '#000000',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -177,9 +177,9 @@ export const SlideDeckViewer: React.FC<SlideDeckViewerProps> = ({
         }}
       >
         <div>
-          <div style={{ fontSize: 13.5, fontWeight: 600, color: '#f4f4f5' }}>
+          <div style={{ fontSize: 13.5, fontWeight: 600, color: '#ededed' }}>
             {project.name}{' '}
-            <span style={{ fontSize: 11.5, color: '#71717a', fontWeight: 400 }}>
+            <span style={{ fontSize: 11.5, color: '#7d7d7d', fontWeight: 400 }}>
               ({slides.length} slides • ID: {project.id})
             </span>
           </div>
@@ -187,7 +187,7 @@ export const SlideDeckViewer: React.FC<SlideDeckViewerProps> = ({
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
           <label
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: '#9e9ea7' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: '#a1a1a1' }}
             title="Choose the export format"
           >
             Format
@@ -245,9 +245,9 @@ export const SlideDeckViewer: React.FC<SlideDeckViewerProps> = ({
           style={{
             padding: '6px 14px',
             fontSize: 11.5,
-            color: error ? '#f87171' : '#9e9ea7',
-            backgroundColor: error ? '#1f1113' : '#101014',
-            borderBottom: '1px solid #1e1e22',
+            color: error ? '#f87171' : '#a1a1a1',
+            backgroundColor: error ? '#191919' : '#000000',
+            borderBottom: '1px solid #1f1f1f',
             display: 'flex',
             alignItems: 'center',
             gap: 8,
@@ -255,7 +255,7 @@ export const SlideDeckViewer: React.FC<SlideDeckViewerProps> = ({
         >
           {busyLabel}
           {progress && (
-            <span style={{ color: '#60a5fa' }}>
+            <span style={{ color: '#ededed' }}>
               {progress.done}/{progress.total}
             </span>
           )}
@@ -281,10 +281,10 @@ export const SlideDeckViewer: React.FC<SlideDeckViewerProps> = ({
               width: SLIDE_WIDTH * scale,
               height: SLIDE_HEIGHT * scale,
               position: 'relative',
-              backgroundColor: '#ffffff',
+              backgroundColor: '#ededed',
               borderRadius: Math.max(2, 8 * scale),
               overflow: 'hidden',
-              border: '1px solid #27272f',
+              border: '1px solid #262626',
               boxShadow: '0 10px 30px rgba(0,0,0,0.55)',
               flexShrink: 0,
             }}
@@ -304,13 +304,13 @@ export const SlideDeckViewer: React.FC<SlideDeckViewerProps> = ({
                 left: 0,
                 transform: `scale(${scale})`,
                 transformOrigin: 'top left',
-                backgroundColor: '#ffffff',
+                backgroundColor: '#ededed',
               }}
               sandbox="allow-scripts allow-same-origin"
             />
           </div>
         ) : (
-          <div style={{ color: '#71717a', fontSize: 13 }}>No slides in project.</div>
+          <div style={{ color: '#7d7d7d', fontSize: 13 }}>No slides in project.</div>
         )}
       </div>
 
@@ -334,7 +334,7 @@ export const SlideDeckViewer: React.FC<SlideDeckViewerProps> = ({
             <ChevronLeft size={14} />
             Prev
           </button>
-          <span style={{ fontSize: 12, color: '#d4d4d8', fontFamily: 'JetBrains Mono, monospace' }}>
+          <span style={{ fontSize: 12, color: '#d4d4d4', fontFamily: 'JetBrains Mono, monospace' }}>
             Slide {currentIdx + 1} of {slides.length}
           </span>
           <button
@@ -354,8 +354,8 @@ export const SlideDeckViewer: React.FC<SlideDeckViewerProps> = ({
         <div
           style={{
             padding: '8px 14px',
-            borderTop: '1px solid #1e1e22',
-            backgroundColor: '#101014',
+            borderTop: '1px solid #1f1f1f',
+            backgroundColor: '#000000',
             display: 'flex',
             gap: 8,
             overflowX: 'auto',
@@ -369,9 +369,9 @@ export const SlideDeckViewer: React.FC<SlideDeckViewerProps> = ({
               style={{
                 padding: '6px 12px',
                 borderRadius: 6,
-                border: idx === currentIdx ? '1px solid #60a5fa' : '1px solid #27272f',
-                backgroundColor: idx === currentIdx ? '#1e1e28' : '#151519',
-                color: idx === currentIdx ? '#f4f4f5' : '#9e9ea7',
+                border: idx === currentIdx ? '1px solid #ededed' : '1px solid #262626',
+                backgroundColor: idx === currentIdx ? '#191919' : '#0a0a0a',
+                color: idx === currentIdx ? '#ededed' : '#a1a1a1',
                 fontSize: 11.5,
                 cursor: 'pointer',
                 flexShrink: 0,

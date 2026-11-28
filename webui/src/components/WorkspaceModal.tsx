@@ -78,12 +78,12 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
             borderRadius: 6,
             cursor: 'pointer',
             fontSize: 12.5,
-            color: '#d4d4d8',
+            color: '#d4d4d4',
           }}
           className="list-item"
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-            <Folder size={14} color="#a1a1aa" />
+            <Folder size={14} color="#a1a1a1" />
             <span style={{ fontWeight: 500 }}>{node.name}</span>
             <span className="folder-node-name">{node.path}</span>
           </div>
@@ -161,7 +161,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
         {/* Folders-Only Tree List */}
         <div className="folder-tree">
           {folders.length === 0 ? (
-            <div style={{ padding: 14, fontSize: 12, color: '#71717a' }}>
+            <div style={{ padding: 14, fontSize: 12, color: '#7d7d7d' }}>
               No subdirectories inside {browsingPath}.
             </div>
           ) : (

@@ -86,8 +86,8 @@ const AgentLogo: React.FC<{ src: string; size: number; radius?: number }> = ({
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#131318',
-        border: '1px solid #27272f',
+        backgroundColor: '#000000',
+        border: '1px solid #262626',
       }}
     >
       <img
@@ -332,8 +332,8 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
     padding: '9px 11px',
     borderRadius: 8,
     cursor: 'pointer',
-    backgroundColor: isSelected ? '#1c1c22' : '#131317',
-    border: isSelected ? '1px solid #383842' : '1px solid #1f1f25',
+    backgroundColor: isSelected ? '#000000' : '#000000',
+    border: isSelected ? '1px solid #303030' : '1px solid #1f1f1f',
   });
 
   return (
@@ -376,16 +376,16 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
         <div
           style={{
             width: 'clamp(260px, 30%, 350px)',
-            borderRight: '1px solid #1e1e22',
+            borderRight: '1px solid #1f1f1f',
             display: 'flex',
             flexDirection: 'column',
-            backgroundColor: '#0c0c0f',
+            backgroundColor: '#000000',
             overflowY: 'auto',
             padding: 8,
             gap: 6,
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#71717a', padding: '4px 6px' }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#7d7d7d', padding: '4px 6px' }}>
             DEFAULT AGENT
           </div>
           <div
@@ -403,7 +403,7 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
             <AgentLogo src={DEFAULT_LOGO} size={32} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontWeight: 600, fontSize: 12.5, color: '#f4f4f5' }}>
+                <span style={{ fontWeight: 600, fontSize: 12.5, color: '#ededed' }}>
                   Default Mythgram Agent
                 </span>
                 {!activeAgentId && (
@@ -420,7 +420,7 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: 11, color: '#9e9ea7', marginTop: 2 }}>
+              <div style={{ fontSize: 11, color: '#a1a1a1', marginTop: 2 }}>
                 Full runtime, all tools, no modifications.
               </div>
             </div>
@@ -430,7 +430,7 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
             style={{
               fontSize: 11,
               fontWeight: 600,
-              color: '#71717a',
+              color: '#7d7d7d',
               padding: '10px 6px 4px 6px',
             }}
           >
@@ -438,7 +438,7 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
           </div>
 
           {agents.length === 0 && (
-            <div style={{ padding: '4px 8px', fontSize: 11.5, color: '#64646c', lineHeight: 1.45 }}>
+            <div style={{ padding: '4px 8px', fontSize: 11.5, color: '#7d7d7d', lineHeight: 1.45 }}>
               No custom agents yet. Create one to give the same Mythgram runtime a custom
               name, logo, prompt, and toolset.
             </div>
@@ -465,7 +465,7 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
                     style={{
                       fontWeight: 600,
                       fontSize: 12.5,
-                      color: '#60a5fa',
+                      color: '#ededed',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -490,7 +490,7 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
                 <div
                   style={{
                     fontSize: 11,
-                    color: '#9e9ea7',
+                    color: '#a1a1a1',
                     marginTop: 2,
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -505,7 +505,7 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
         </div>
 
         {/* Detail / editor */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 18, backgroundColor: '#09090b' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 18, backgroundColor: '#000000' }}>
           {statusMessage && !draft && (
             <div
               style={{
@@ -549,10 +549,10 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: 18, color: '#f4f4f5' }}>
+                  <h2 style={{ margin: 0, fontSize: 18, color: '#ededed' }}>
                     {draft.id ? 'Edit Custom Agent' : 'Create Custom Agent'}
                   </h2>
-                  <p style={{ margin: '4px 0 0 0', fontSize: 12.5, color: '#a1a1aa' }}>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 12.5, color: '#a1a1a1' }}>
                     Custom agents run on the exact same Mythgram runtime with the full tool
                     system. No sub-agent restrictions apply.
                   </p>
@@ -613,7 +613,7 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
                     style={{ display: 'none' }}
                     onChange={handleLogoUpload}
                   />
-                  <div style={{ fontSize: 10.5, color: '#71717a', maxWidth: 170, lineHeight: 1.4 }}>
+                  <div style={{ fontSize: 10.5, color: '#7d7d7d', maxWidth: 170, lineHeight: 1.4 }}>
                     PNG, JPEG, WEBP, GIF, or SVG up to 2 MB.
                   </div>
                 </div>
@@ -656,7 +656,7 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
                     System Prompt
                   </label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 10.5, color: '#71717a' }}>
+                    <span style={{ fontSize: 10.5, color: '#7d7d7d' }}>
                       {draft.systemPrompt.length.toLocaleString()} chars
                     </span>
                     <button
@@ -727,7 +727,7 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
                     </button>
                   </div>
                 </div>
-                <div style={{ fontSize: 10.5, color: '#71717a', marginTop: 4 }}>
+                <div style={{ fontSize: 10.5, color: '#7d7d7d', marginTop: 4 }}>
                   No tool restrictions: every native tool, MCP tool, and connector tool is
                   selectable. Selecting none enables all tools at runtime.
                 </div>
@@ -741,8 +741,8 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
                     overflowY: 'auto',
                     padding: 8,
                     borderRadius: 8,
-                    backgroundColor: '#0e0e12',
-                    border: '1px solid #1f1f25',
+                    backgroundColor: '#000000',
+                    border: '1px solid #1f1f1f',
                   }}
                 >
                   {filteredTools.map((tool) => {
@@ -762,18 +762,18 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
                           fontSize: 11.5,
                           fontFamily: 'JetBrains Mono, monospace',
                           cursor: 'pointer',
-                          backgroundColor: checked ? '#22222c' : '#111115',
-                          border: checked ? '1px solid #60a5fa' : '1px solid #25252c',
-                          color: checked ? '#f4f4f5' : '#71717a',
+                          backgroundColor: checked ? '#0a0a0a' : '#000000',
+                          border: checked ? '1px solid #ededed' : '1px solid #262626',
+                          color: checked ? '#ededed' : '#7d7d7d',
                         }}
                       >
-                        {checked && <Check size={11} color="#60a5fa" />}
+                        {checked && <Check size={11} color="#ededed" />}
                         <span>{tool.name}</span>
                       </button>
                     );
                   })}
                   {filteredTools.length === 0 && (
-                    <span style={{ fontSize: 11.5, color: '#64646c' }}>No tools match.</span>
+                    <span style={{ fontSize: 11.5, color: '#7d7d7d' }}>No tools match.</span>
                   )}
                 </div>
               </div>
@@ -807,10 +807,10 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                   <AgentLogo src={selectedAgent.logo} size={56} radius={12} />
                   <div>
-                    <h2 style={{ margin: 0, fontSize: 18, color: '#f4f4f5' }}>
+                    <h2 style={{ margin: 0, fontSize: 18, color: '#ededed' }}>
                       {selectedAgent.name}
                     </h2>
-                    <p style={{ margin: '4px 0 0 0', fontSize: 12.5, color: '#a1a1aa' }}>
+                    <p style={{ margin: '4px 0 0 0', fontSize: 12.5, color: '#a1a1a1' }}>
                       {selectedAgent.description || 'No description'}
                     </p>
                   </div>
@@ -871,11 +871,11 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
                     margin: 0,
                     padding: 12,
                     borderRadius: 8,
-                    backgroundColor: '#121216',
-                    border: '1px solid #232329',
+                    backgroundColor: '#000000',
+                    border: '1px solid #262626',
                     fontFamily: 'JetBrains Mono, monospace',
                     fontSize: 12,
-                    color: '#e4e4e7',
+                    color: '#ededed',
                     whiteSpace: 'pre-wrap',
                     maxHeight: 320,
                     overflowY: 'auto',
@@ -900,11 +900,11 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
                       style={{
                         padding: '4px 8px',
                         borderRadius: 6,
-                        backgroundColor: '#16161b',
-                        border: '1px solid #272730',
+                        backgroundColor: '#000000',
+                        border: '1px solid #262626',
                         fontSize: 11.5,
                         fontFamily: 'JetBrains Mono, monospace',
-                        color: '#d4d4d8',
+                        color: '#d4d4d4',
                       }}
                     >
                       {t}
@@ -925,10 +925,10 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 <AgentLogo src={DEFAULT_LOGO} size={56} radius={12} />
                 <div>
-                  <h2 style={{ margin: 0, fontSize: 18, color: '#f4f4f5' }}>
+                  <h2 style={{ margin: 0, fontSize: 18, color: '#ededed' }}>
                     Default Mythgram Agent
                   </h2>
-                  <p style={{ margin: '4px 0 0 0', fontSize: 12.5, color: '#a1a1aa' }}>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 12.5, color: '#a1a1a1' }}>
                     The unmodified main runtime with its full system prompt and every tool.
                   </p>
                 </div>
@@ -967,10 +967,10 @@ export const CustomAgentsPage: React.FC<CustomAgentsPageProps> = ({
                 style={{
                   padding: 14,
                   borderRadius: 8,
-                  backgroundColor: '#101014',
-                  border: '1px solid #1f1f25',
+                  backgroundColor: '#000000',
+                  border: '1px solid #1f1f1f',
                   fontSize: 12.5,
-                  color: '#a1a1aa',
+                  color: '#a1a1a1',
                   lineHeight: 1.55,
                 }}
               >
